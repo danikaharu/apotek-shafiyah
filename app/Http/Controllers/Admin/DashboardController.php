@@ -10,7 +10,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('customer')->latest()->limit(5)->get();
+        $orders = Order::with('user')->latest()->limit(5)->get();
 
         return view('admin.dashboard.index', compact('orders'));
     }

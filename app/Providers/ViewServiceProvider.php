@@ -44,7 +44,7 @@ class ViewServiceProvider extends ServiceProvider
 
         View::composer('admin.discount.index', function ($view) {
             $view->with([
-                'products' => Product::latest()->get(),
+                'products' => Product::where('stock', '>', 0)->get(),
             ]);
         });
 

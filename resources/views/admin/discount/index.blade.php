@@ -60,22 +60,18 @@
                                             <span class="text-danger" id="end_date_error"></span>
                                         </div>
                                         <div class="form-group">
-                                            <label for="">Kode Obat <span class="text-danger">*</span></label>
+                                            <label for="">Nama Obat <span class="text-danger">*</span></label>
                                             <select id="selectProduct" class="form-control select2" name="product_id"
-                                                data-placeholder="Pilih Produk">
+                                                data-placeholder="Pilih Obat">
                                                 @foreach ($products as $product)
                                                     <option></option>
                                                     <option value="{{ $product->id }}" data-price="{{ $product->price }}"
                                                         data-name="{{ $product->name }}">
-                                                        {{ $product->code }}
+                                                        {{ $product->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                             <span class="text-danger" id="product_id_error"></span>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="text-secondary">Nama Item </label>
-                                            <input type="text" id="product_name" class="form-control" readonly>
                                         </div>
                                         <div class="form-group">
                                             <label class="text-secondary">Harga Jual </label>

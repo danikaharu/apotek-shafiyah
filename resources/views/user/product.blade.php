@@ -45,6 +45,8 @@
                                                     {{ $product->price }}</i> --}}
                                                 <h6 class="text-success">@currency($product->price) /
                                                     {{ $product->unit->name }}</h6>
+                                                <h6 class="text-success">Stok :
+                                                    {{ $product->stock }}</h6>
                                                 <a href="{{ route('detail.product', $product->id) }}"
                                                     class="btn btn-info btn-block btn-sm">
                                                     <i class="fas fa-eye"></i> Detail

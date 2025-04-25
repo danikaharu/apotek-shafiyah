@@ -29,7 +29,9 @@ class PurchaseExport implements FromCollection, WithHeadings, WithMapping, Shoul
 
     public function collection()
     {
-        return Purchase::with('supplier', 'product')->whereBetween('order_date', [$this->startDate, $this->endDate])->get();
+        $data = Purchase::with('supplier', 'product')->whereBetween('order_date', [$this->startDate, $this->endDate])->get();
+
+        return $data;
     }
 
     /**

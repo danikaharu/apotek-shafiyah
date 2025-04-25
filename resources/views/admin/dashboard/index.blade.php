@@ -38,7 +38,7 @@
                             @forelse($orders as $order)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $order->customer->user->username ?? 'Kasir' }}</td>
+                                    <td>{{ $order->user->customer->full_name ?? 'Kasir' }}</td>
                                     <td>{{ $order->created_at->format('d F Y H:i:s') }}</td>
                                     <td><span class="tag tag-success">{{ $order->status() }}</span></td>
                                 </tr>

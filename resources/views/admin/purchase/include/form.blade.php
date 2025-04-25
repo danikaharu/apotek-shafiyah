@@ -41,7 +41,6 @@
         <table id="myTable" class="table table-sm table-striped table-bordered text-center">
             <thead class="bg-navy">
                 <tr>
-                    <th style="width:20%;">Kode Obat</th>
                     <th style="width:20%;">Nama</th>
                     <th>Tanggal Expired</th>
                     <th>Kuantiti</th>
@@ -56,16 +55,15 @@
                     <td>
                         <select id="selectProduct" name="product_id[]" class="form-control selectProduct"
                             style="width: 100%;">
-                            <option>-- Pilih Kode --</option>
+                            <option>-- Pilih Obat --</option>
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}" data-name="{{ $product->name }}"
                                     data-unit="{{ $product->unit->name }}">
-                                    {{ $product->code }}
+                                    {{ $product->name }}
                                 </option>
                             @endforeach
                         </select>
                     </td>
-                    <td><input type="text" class="form-control" id="product_name" readonly></td>
                     <td><input type="date" class="form-control" name="expired_date[]"></td>
                     <td><input type="text" class="form-control" name="quantity[]"></td>
                     <td><input type="text" class="form-control" id="product_unit" readonly></td>

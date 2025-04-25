@@ -49,19 +49,20 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        @if ($order->customer != null)
-                                            <img src="{{ asset('storage/upload/user/' . $order->customer->image) }}"
+                                        @if ($order->user->customer->image != null)
+                                            <img src="{{ asset('storage/upload/user/' . $order->user->customer->image) }}"
                                                 alt="User" style="max-width:40px;">
                                         @else
+                                            <img src="{{ asset('template/dist/img/avatar4.png') }}" style="max-width:40px;">
                                         @endif
                                     </td>
                                     <td></td>
-                                    <td>{{ $order->customer->full_name ?? '' }}</td>
+                                    <td>{{ $order->user->customer->full_name ?? '' }}</td>
                                 </tr>
                                 <tr>
                                     <td>No HP</td>
                                     <td>:</td>
-                                    <td>{{ $order->customer->phone_number ?? '' }}</td>
+                                    <td>{{ $order->user->customer->phone_number ?? '' }}</td>
                                 </tr>
 
                             </tbody>
@@ -99,7 +100,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h6 class="text-bold">Alamat Customer :</h6>
-                        <p>{{ $order->customer->address ?? '' }}</p>
+                        <p>{{ $order->user->customer->address ?? '' }}</p>
                     </div>
 
                 </div>

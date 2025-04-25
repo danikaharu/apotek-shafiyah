@@ -12,9 +12,9 @@ class Order extends Model
     // Order
     protected $fillable = ['admin_id', 'customer_id', 'total_price', 'status'];
 
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class, 'customer_id');
     }
 
     public function detail_order()

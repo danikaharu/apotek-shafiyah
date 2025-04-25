@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateReceiptRequest extends FormRequest
 {
@@ -22,7 +23,11 @@ class UpdateReceiptRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'purchase_id' => 'required',
+            'purchase_id' => [
+                'required',
+                'exists:purchases,id',
+                Rule::unique('receipts', 'purchase_id')->ignore($this->route('receipt')),
+            ],
             'receipt_date' => 'required',
             'amount' => 'required',
             'information' => 'required',

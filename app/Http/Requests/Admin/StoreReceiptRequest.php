@@ -22,7 +22,7 @@ class StoreReceiptRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'purchase_id' => 'required',
+            'purchase_id' => 'required|exists:purchases,id|unique:receipts,purchase_id',
             'product_id' => 'exists:products,id',
             'receipt_date' => 'required',
             'amount' => 'required',

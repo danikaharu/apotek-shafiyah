@@ -48,6 +48,13 @@
                                                     <td>:</td>
                                                     <td>{{ $product->type->name }}</td>
                                                 </tr>
+                                                <tr>
+                                                    <td>
+                                                        <h4>Stok Obat</h4>
+                                                    </td>
+                                                    <td>:</td>
+                                                    <td>{{ $product->stock }}</td>
+                                                </tr>
                                             </tbody>
                                         </table>
 

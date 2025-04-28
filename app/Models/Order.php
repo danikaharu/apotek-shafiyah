@@ -31,7 +31,7 @@ class Order extends Model
         } elseif ($this->status == 3) {
             return 'Dibatalkan';
         } else {
-            return 'Menunggu Dibayar';
+            return 'Sedang Diproses';
         }
     }
 }

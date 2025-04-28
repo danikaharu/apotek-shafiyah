@@ -4,12 +4,13 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
-use App\Models\DetailCart;
 use App\Models\DetailOrder;
 use App\Models\Order;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Midtrans\Snap;
+use Midtrans\Config;
 
 class OrderController extends Controller
 {
@@ -28,61 +29,69 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            $productId = $request->input('product_id');
             $customerId = auth()->user()->id;
-            $total_price = $request->input('total_price');
-            $status = 4;
-            $amountValue = $request->input('amountValue');
-            $priceValue = $request->input('priceValue');
-            $discountValue = $request->input('discountValue');
-            $totalValue = $request->input('totalValue');
+            $products = $request->products;
+            $total_price = (int) $request->total_price;
 
-            $adminId = 1;
-            $customerId = $customerId;
+            // Hapus Cart setelah checkout
+            $cart = Cart::where('customer_id', $customerId)->first();
+            if ($cart) {
+                foreach ($cart->details as $detail) {
+                    $detail->delete();
+                }
+                $cart->delete();
+            }
 
-            $order = Order::where('customer_id', $customerId)->first();
+            // Buat order baru
+            $order = Order::create([
+                'admin_id' => 1,
+                'customer_id' => $customerId,
+                'total_price' => $total_price,
+                'status' => 4, // Menunggu pembayaran
+            ]);
 
-            if (!$order) {
-                $order = Order::create([
-                    'admin_id' => $adminId,
-                    'customer_id' => $customerId,
-                    'total_price' => $total_price,
-                    'status' => $status
+            // Insert semua detail order
+            foreach ($products as $product) {
+                DetailOrder::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product['product_id'],
+                    'price' => $product['price'],
+                    'discount' => $product['discount'] ?? 0,
+                    'amount' => $product['amount'],
+                    'total_price' => $product['total'],
                 ]);
             }
 
-            $detailOrder = new DetailOrder([
-                'order_id' => $order->id,
-                'product_id' => $productId,
-                'price' => $priceValue,
-                'discount' => $discountValue,
-                'amount' => $amountValue,
-                'total_price' => $totalValue
-            ]);
+            // Konfigurasi Midtrans
+            Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+            Config::$isProduction = false;
+            Config::$isSanitized = true;
+            Config::$is3ds = true;
 
-            $detailOrder->save();
+            $params = [
+                'transaction_details' => [
+                    'order_id' => 'ORDER-' . $order->id . '-' . time(),
+                    'gross_amount' => $total_price,
+                ],
+                'customer_details' => [
+                    'first_name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                ],
+            ];
 
-            $cart = Cart::where('customer_id', $customerId)->first();
-            $detailCart = DetailCart::where('cart_id', $cart->id)->get();
-
-            if ($cart) {
-                $detailCart = DetailCart::where('cart_id', $cart->id)->get();
-
-                if ($cart->total_price == $order->total_price) {
-                    foreach ($detailCart as $detail) {
-                        $detail->delete();
-                    }
-
-                    $cart->delete();
-                }
-            }
+            $snapToken = Snap::getSnapToken($params);
 
             DB::commit();
 
-            return redirect()->back();
+            return response()->json([
+                'snap_token' => $snapToken,
+                'order_id' => $order->id
+            ]);
         } catch (\Throwable $th) {
             DB::rollBack();
-            dd($th->getMessage());
+            return response()->json([
+                'message' => $th->getMessage()
+            ], 500);
         }
     }
 
@@ -111,5 +120,21 @@ class OrderController extends Controller
         }
 
         return view('user.order-note', compact('order', 'price', 'discount', 'totalPrice', 'profile'));
+    }
+
+    public function selfPickup(Request $request)
+    {
+        $order = Order::find($request->order_id);
+        $order->status = 4;
+        $order->save();
+        return redirect()->route('invoice.download', ['order_id' => $order->id]); // Redirect to invoice page
+    }
+
+    public function orderMaxim(Request $request)
+    {
+        $order = Order::find($request->order_id);
+        $order->status = 4;
+        $order->save();
+        return redirect('https://wa.me/082393232710'); // Redirect to WhatsApp Admin
     }
 }

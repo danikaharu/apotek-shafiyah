@@ -31,6 +31,13 @@ Route::get('/riwayat', [App\Http\Controllers\User\OrderController::class, 'index
 Route::get('/nota/{order}', [App\Http\Controllers\User\OrderController::class, 'note'])->name('order.note');
 Route::post('/order', [App\Http\Controllers\User\OrderController::class, 'store'])->name('store.order');
 Route::put('/order/{order}', [App\Http\Controllers\User\OrderController::class, 'cancel'])->name('cancel.order');
+Route::post('/order/self-pickup/{order_id}', [App\Http\Controllers\User\OrderController::class, 'selfPickup'])->name('order.selfPickup');
+Route::post('/order/maxim/{order_id}', [App\Http\Controllers\User\OrderController::class, 'orderMaxim'])->name('order.maxim');
+
+Route::post('/midtrans/callback', [App\Http\Controllers\User\MidtransController::class, 'callback'])->name('midtrans.callback');
+Route::get('/payment/success/{order_id}', [App\Http\Controllers\User\MidtransController::class, 'success'])->name('payment.success');
+Route::get('/payment/pending', [App\Http\Controllers\User\MidtransController::class, 'pending'])->name('payment.pending');
+Route::get('/payment/failed', [App\Http\Controllers\User\MidtransController::class, 'failed'])->name('payment.failed');
 
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth'], function () {

@@ -302,41 +302,103 @@
 <!-- /.modal resep -->
 
 @push('script')
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}">
+    </script>
     <script>
         $(document).ready(function() {
-            $('#buatOrder').click(function() {
+            $('#buatOrder').click(function(e) {
+                e.preventDefault();
+
+                var $btn = $(this);
+                $btn.prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Membuat Pesanan...');
+
+                var products = [];
+                var valid = true;
+
+                // Loop untuk mengambil data produk dari tabel
                 $('#tabel tbody tr').each(function() {
                     var row = $(this);
                     var productId = row.find('.product_id').val();
-                    var total_price = $('#totalPrice').text().replace('Total Harga : Rp. ', '');
-                    var amountValue = row.find('.amount').text();
-                    var priceValue = row.find('.price').text().replace('Rp. ', '');
-                    var discountValue = row.find('.discount').text();
-                    var totalValue = row.find('.total').text().replace('Rp. ', '');
 
-                    $.ajax({
-                        type: 'POST',
-                        url: '{{ route('store.order') }}',
-                        data: {
-                            product_id: productId,
-                            total_price: total_price,
-                            amountValue: amountValue,
-                            priceValue: priceValue,
-                            discountValue: discountValue,
-                            totalValue: totalValue,
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            alert('Berhasil buat pesanan!');
-                            location.reload();
-                        },
-                        error: function(xhr, status, error) {
-                            console.error(error);
-                            alert('Terjadi kesalahan saat membayar.');
-                        }
+                    // Validasi apakah product_id tersedia
+                    if (!productId) {
+                        valid = false;
+                        return false; // keluar dari loop
+                    }
+
+                    // Push produk ke array
+                    products.push({
+                        product_id: productId,
+                        amount: row.find('.amount').text().trim(),
+                        price: row.find('.price').text().replace('Rp. ', '').replace(/\./g,
+                            '').trim(),
+                        discount: row.find('.discount').text().trim(),
+                        total: row.find('.total').text().replace('Rp. ', '').replace(/\./g,
+                            '').trim(),
                     });
                 });
-            })
-        })
+
+                // Validasi jika ada data produk yang tidak lengkap
+                if (!valid) {
+                    alert('Data produk tidak lengkap!');
+                    $btn.prop('disabled', false).html('Buat Pesanan');
+                    return;
+                }
+
+                // Ambil total harga dan formatkan
+                var total_price = $('#totalPrice').text().replace('Total Harga : Rp. ', '').replace(/\./g,
+                    '').trim();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '{{ route('store.order') }}',
+                    data: {
+                        products: products,
+                        total_price: total_price,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        // Pastikan menerima snap_token dan order_id dari response
+                        if (response.snap_token && response.order_id) {
+                            snap.pay(response.snap_token, {
+                                onSuccess: function(result) {
+                                    console.log(result);
+                                    // Redirect ke halaman success dengan order_id
+                                    window.location.href = '/payment/success/' +
+                                        response.order_id;
+                                },
+                                onPending: function(result) {
+                                    console.log(result);
+                                    // Redirect ke halaman pending saat pembayaran dalam status pending
+                                    window.location.href = '/payment/pending';
+                                },
+                                onError: function(result) {
+                                    console.error(result);
+                                    alert('Pembayaran gagal! Silakan coba lagi.');
+                                    $btn.prop('disabled', false).html(
+                                        'Buat Pesanan');
+                                },
+                                onClose: function() {
+                                    alert('Pembayaran dibatalkan.');
+                                    $btn.prop('disabled', false).html(
+                                        'Buat Pesanan');
+                                }
+                            });
+                        } else {
+                            console.error('Snap Token atau Order ID tidak diterima.');
+                            alert(
+                                'Terjadi kesalahan saat memulai pembayaran. Silakan coba lagi.');
+                            $btn.prop('disabled', false).html('Buat Pesanan');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        alert('Terjadi kesalahan pada server.');
+                        $btn.prop('disabled', false).html('Buat Pesanan');
+                    }
+                });
+            });
+        });
     </script>
 @endpush

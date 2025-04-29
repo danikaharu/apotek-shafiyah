@@ -25,6 +25,7 @@ Route::post('/cart/add', [App\Http\Controllers\User\CartController::class, 'add'
 Route::patch('/cart/update-quantity/{cartItemId}', [App\Http\Controllers\User\CartController::class, 'updateQuantity'])->name('cart.updateQuantity');
 Route::delete('/cart/remove/{cartItemId}', [App\Http\Controllers\User\CartController::class, 'removeItem'])->name('cart.removeItem');
 Route::get('/cart/total', [App\Http\Controllers\User\CartController::class, 'getCartTotal'])->name('cart.total');
+Route::get('/cart/get', [App\Http\Controllers\User\CartController::class, 'getCart'])->name('cart.get');
 
 
 Route::post('/resep', [App\Http\Controllers\User\RecipeController::class, 'store'])->name('store.recipe');

@@ -127,4 +127,16 @@ class CartController extends Controller
             'total_items' => $totalItems
         ]);
     }
+
+    public function getCart()
+    {
+        $customerId = auth()->id();
+        $cart = Cart::where('customer_id', $customerId)->with('details.product')->first();
+
+        $cartHtml = view('layouts.user.include.cart_modal_content', compact('cart'))->render();
+
+        return response()->json([
+            'cart_html' => $cartHtml,
+        ]);
+    }
 }

@@ -10,7 +10,11 @@
             </div>
 
             <div class="modal-body">
-                @include('layouts.user.include.cart_modal_content', ['cart' => $cart])
+                <div class="text-center">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -29,6 +33,22 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        $('#modal-troli').on('show.bs.modal', function(e) {
+            $.ajax({
+                url: '{{ route('cart.get') }}', // Pastikan kamu buat route cart.get
+                type: 'GET',
+                success: function(response) {
+                    $('#cart-modal-body').html(response.cart_html);
+                    updateCartTotal(); // refresh badge & total
+                },
+                error: function(xhr) {
+                    $('#cart-modal-body').html(
+                        '<p class="text-danger">Gagal memuat troli.</p>');
+                }
+            });
+        });
+
+
         function updateCartTotal() {
             $.ajax({
                 url: '{{ route('cart.total') }}', // kita buat route baru cart.total

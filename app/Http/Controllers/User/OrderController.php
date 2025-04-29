@@ -30,39 +30,40 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             $customerId = auth()->user()->id;
-            $products = $request->products;
-            $total_price = (int) $request->total_price;
+            $total_price = (int) $request->total_price; // atau bisa juga dihitung ulang dari cart
+            $cart = Cart::where('customer_id', $customerId)->with('details')->first();
 
-            // Hapus Cart setelah checkout
-            $cart = Cart::where('customer_id', $customerId)->first();
-            if ($cart) {
-                foreach ($cart->details as $detail) {
-                    $detail->delete();
-                }
-                $cart->delete();
+            if (!$cart || $cart->details->isEmpty()) {
+                return response()->json([
+                    'message' => 'Cart kosong, tidak bisa checkout.'
+                ], 400);
             }
 
             // Buat order baru
             $order = Order::create([
                 'admin_id' => 1,
                 'customer_id' => $customerId,
-                'total_price' => $total_price,
+                'total_price' => $cart->total_price,
                 'status' => 4, // Menunggu pembayaran
             ]);
 
             // Insert semua detail order
-            foreach ($products as $product) {
+            foreach ($cart->details as $detail) {
                 DetailOrder::create([
                     'order_id' => $order->id,
-                    'product_id' => $product['product_id'],
-                    'price' => $product['price'],
-                    'discount' => $product['discount'] ?? 0,
-                    'amount' => $product['amount'],
-                    'total_price' => $product['total'],
+                    'product_id' => $detail->product_id,
+                    'price' => $detail->price,
+                    'discount' => $detail->discount,
+                    'amount' => $detail->amount,
+                    'total_price' => $detail->total_price,
                 ]);
             }
 
-            // Konfigurasi Midtrans
+            // Hapus Cart setelah checkout
+            $cart->details()->delete();
+            $cart->delete();
+
+            // Midtrans
             Config::$serverKey = env('MIDTRANS_SERVER_KEY');
             Config::$isProduction = false;
             Config::$isSanitized = true;
@@ -71,7 +72,7 @@ class OrderController extends Controller
             $params = [
                 'transaction_details' => [
                     'order_id' => 'ORDER-' . $order->id . '-' . time(),
-                    'gross_amount' => $total_price,
+                    'gross_amount' => $order->total_price,
                 ],
                 'customer_details' => [
                     'first_name' => auth()->user()->name,
@@ -125,7 +126,7 @@ class OrderController extends Controller
     public function selfPickup(Request $request)
     {
         $order = Order::find($request->order_id);
-        $order->status = 4;
+        $order->status = 2;
         $order->save();
         return redirect()->route('invoice.download', ['order_id' => $order->id]); // Redirect to invoice page
     }
@@ -133,7 +134,7 @@ class OrderController extends Controller
     public function orderMaxim(Request $request)
     {
         $order = Order::find($request->order_id);
-        $order->status = 4;
+        $order->status = 2;
         $order->save();
         return redirect('https://wa.me/082393232710'); // Redirect to WhatsApp Admin
     }

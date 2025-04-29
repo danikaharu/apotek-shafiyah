@@ -19,14 +19,20 @@ Route::get('/discount', [App\Http\Controllers\User\DashboardController::class, '
 Route::get('/detail-product/{product}', [App\Http\Controllers\User\DashboardController::class, 'detailProduct'])->name('detail.product');
 Route::get('/search-product', [App\Http\Controllers\User\DashboardController::class, 'searchProduct'])->name('search.product');
 Route::get('/kategori/{category}', [App\Http\Controllers\User\DashboardController::class, 'category'])->name('category');
-Route::post('/cart', [App\Http\Controllers\User\CartController::class, 'store'])->name('store.cart');
-Route::delete('/cart/{cartId}/{productId}', [App\Http\Controllers\User\CartController::class, 'destroy'])->name('destroy.cart');
+
+// Cart
+Route::post('/cart/add', [App\Http\Controllers\User\CartController::class, 'add'])->name('cart.add');
+Route::patch('/cart/update-quantity/{cartItemId}', [App\Http\Controllers\User\CartController::class, 'updateQuantity'])->name('cart.updateQuantity');
+Route::delete('/cart/remove/{cartItemId}', [App\Http\Controllers\User\CartController::class, 'removeItem'])->name('cart.removeItem');
+Route::get('/cart/total', [App\Http\Controllers\User\CartController::class, 'getCartTotal'])->name('cart.total');
+
 
 Route::post('/resep', [App\Http\Controllers\User\RecipeController::class, 'store'])->name('store.recipe');
 
 Route::get('/akun', [App\Http\Controllers\User\AccountController::class, 'index'])->name('account.index');
 Route::put('/akun/{customer}', [App\Http\Controllers\User\AccountController::class, 'update'])->name('account.update');
 
+// Order
 Route::get('/riwayat', [App\Http\Controllers\User\OrderController::class, 'index'])->name('order.history');
 Route::get('/nota/{order}', [App\Http\Controllers\User\OrderController::class, 'note'])->name('order.note');
 Route::post('/order', [App\Http\Controllers\User\OrderController::class, 'store'])->name('store.order');
@@ -34,6 +40,7 @@ Route::put('/order/{order}', [App\Http\Controllers\User\OrderController::class, 
 Route::post('/order/self-pickup/{order_id}', [App\Http\Controllers\User\OrderController::class, 'selfPickup'])->name('order.selfPickup');
 Route::post('/order/maxim/{order_id}', [App\Http\Controllers\User\OrderController::class, 'orderMaxim'])->name('order.maxim');
 
+// Midtrans
 Route::post('/midtrans/callback', [App\Http\Controllers\User\MidtransController::class, 'callback'])->name('midtrans.callback');
 Route::get('/payment/success/{order_id}', [App\Http\Controllers\User\MidtransController::class, 'success'])->name('payment.success');
 Route::get('/payment/pending', [App\Http\Controllers\User\MidtransController::class, 'pending'])->name('payment.pending');

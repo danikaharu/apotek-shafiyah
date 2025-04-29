@@ -8,8 +8,15 @@
         <h5>Pilih cara pengambilan obat:</h5>
 
         <div>
-            <a href="{{ route('order.selfPickup', ['order_id' => $order->id]) }}" class="btn btn-primary">Ambil Sendiri</a>
-            <a href="{{ route('order.maxim', ['order_id' => $order->id]) }}" class="btn btn-warning">Pesan Maxim</a>
+            <form action="{{ route('order.selfPickup', ['order_id' => $order->id]) }}" method="POST" style="display:inline;">
+                @csrf
+                <button type="submit" class="btn btn-primary">Ambil Sendiri</button>
+            </form>
+
+            <form action="{{ route('order.maxim', ['order_id' => $order->id]) }}" method="POST" style="display:inline;">
+                @csrf
+                <button type="submit" class="btn btn-warning">Pesan Maxim</button>
+            </form>
         </div>
     </div>
 @endsection

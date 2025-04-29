@@ -52,14 +52,11 @@
                                                     <i class="fas fa-eye"></i> Detail
                                                 </a>
                                                 @if (auth()->user())
-                                                    <form action="{{ route('store.cart') }}" method="POST">
-                                                        @csrf
-                                                        <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                                        <button type="submit"
-                                                            class="btn btn-success btn-block btn-sm my-2">
-                                                            <i class="fas fa-shopping-cart"></i> Tambah
-                                                        </button>
-                                                    </form>
+                                                    <button type="button"
+                                                        class="btn btn-success btn-block btn-sm my-2 add-to-cart-btn"
+                                                        data-product-id="{{ $product->id }}">
+                                                        <i class="fas fa-shopping-cart"></i> Tambah
+                                                    </button>
                                                 @endif
                                             </div>
                                         </div>
@@ -84,3 +81,41 @@
         </div>
     </div>
 @endsection
+
+@push('script')
+    <script>
+        function formatRupiah(angka) {
+            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        $(document).ready(function() {
+            $('.add-to-cart-btn').click(function() {
+                var productId = $(this).data('product-id');
+
+                $.ajax({
+                    url: '{{ route('cart.add') }}',
+                    method: 'POST',
+                    data: {
+                        product_id: productId,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        // Update jumlah badge cart
+                        $('#badge-cart-count').text(response.total_items);
+
+                        // Update isi modal troli
+                        $('#modal-troli .modal-body').html(response.cart_html);
+
+                        // Update total harga cart
+                        $('#cart-total-price').text(response.cart_total_price_formatted);
+
+                        alert('Produk berhasil ditambahkan ke troli!');
+                    },
+                    error: function(xhr) {
+                        alert('Gagal menambahkan ke troli.');
+                    }
+                });
+            });
+        });
+    </script>
+@endpush

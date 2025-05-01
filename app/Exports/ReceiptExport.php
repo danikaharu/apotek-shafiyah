@@ -104,7 +104,7 @@ class ReceiptExport implements FromCollection, WithHeadings, WithMapping, Should
                 $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
                 $drawing->setName('Logo');
                 $drawing->setDescription('Logo');
-                $drawing->setPath(asset('template/dist/img/ular.png')); // Sesuaikan path logo
+                $drawing->setPath(public_path('template/dist/img/ular.png')); // Sesuaikan path logo
                 $drawing->setHeight(90); // Tinggi logo
                 $drawing->setCoordinates('C2'); // Lokasi penempatan logo
                 $drawing->setWorksheet($event->sheet->getDelegate());

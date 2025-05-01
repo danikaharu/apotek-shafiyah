@@ -100,7 +100,7 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
                 $drawing = new Drawing();
                 $drawing->setName('Logo');
                 $drawing->setDescription('Logo');
-                $drawing->setPath(asset('template/dist/img/ular.png'));
+                $drawing->setPath(public_path('template/dist/img/ular.png'));
                 $drawing->setHeight(90);
                 $drawing->setCoordinates('C2');
                 $drawing->setWorksheet($delegate);

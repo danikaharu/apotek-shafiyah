@@ -59,9 +59,12 @@
             </div>
         </div>
 
-        <a href="#" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modal-resep">
-            <i class="fa fa-upload"></i> Upload Resep
-        </a>
+        @auth
+            <a href="#" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modal-resep">
+                <i class="fa fa-upload"></i> Upload Resep
+            </a>
+
+        @endauth
 
         <ul class="navbar-nav ml-auto">
             <li class="nav-item mr-2">

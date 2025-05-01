@@ -20,6 +20,8 @@
                             <span class="quantity">{{ $item->amount }}</span>
                             <button class="btn btn-sm btn-info update-quantity" data-id="{{ $item->id }}"
                                 data-action="increase">+</button>
+                            <br>
+                            <small class="text-muted">Stok: {{ $item->product->stock }}</small>
                         </td>
                         <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                         <td>Rp <span class="item-total">{{ number_format($item->total_price, 0, ',', '.') }}</span></td>

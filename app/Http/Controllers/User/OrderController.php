@@ -17,6 +17,7 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::where('customer_id', auth()->user()->id)
+            ->where('status', 2)
             ->with('detail_order')
             ->latest()
             ->get();
@@ -39,6 +40,25 @@ class OrderController extends Controller
                 ], 400);
             }
 
+            // Validasi stok
+            foreach ($cart->details as $detail) {
+                $product = $detail->product;
+
+                if (!$product) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Produk tidak ditemukan.'
+                    ], 400);
+                }
+
+                if ($product->stock < $detail->amount) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => "Stok produk {$product->name} hanya tersedia {$product->stock}, Anda memesan {$detail->amount}."
+                    ], 400);
+                }
+            }
+
             // Buat order baru
             $order = Order::create([
                 'admin_id' => 1,
@@ -47,8 +67,15 @@ class OrderController extends Controller
                 'status' => 4, // Menunggu pembayaran
             ]);
 
-            // Insert semua detail order
+            // Insert semua detail order dan kurangi stok
             foreach ($cart->details as $detail) {
+                $product = $detail->product;
+
+                // Kurangi stok produk
+                $product->stock -= $detail->amount;
+                $product->save();
+
+                // Simpan ke detail order
                 DetailOrder::create([
                     'order_id' => $order->id,
                     'product_id' => $detail->product_id,
@@ -128,7 +155,7 @@ class OrderController extends Controller
         $order = Order::find($request->order_id);
         $order->status = 2;
         $order->save();
-        return redirect()->route('invoice.download', ['order_id' => $order->id]); // Redirect to invoice page
+        return redirect()->route('dashboard');
     }
 
     public function orderMaxim(Request $request)

@@ -14,9 +14,9 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="resep">Pilih File Resep</label>
-                        <input type="file" name="resep" id="resep"
-                            class="form-control @error('resep') is-invalid @enderror" required>
-                        @error('resep')
+                        <input type="file" name="image" class="form-control @error('image') is-invalid @enderror"
+                            required>
+                        @error('image')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>

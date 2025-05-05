@@ -62,7 +62,7 @@ class ReceiptController extends Controller
                     ->first();
 
                 if (!$detailPurchase) {
-                    throw new \Exception("Produk dengan ID {$productId} tidak ada dalam detail pembelian.");
+                    throw new \Exception("Produk  tidak ada dalam detail pembelian.");
                 }
 
                 // Hitung total yang sudah diterima sebelumnya
@@ -73,11 +73,11 @@ class ReceiptController extends Controller
                 $sisa = $detailPurchase->quantity - $totalReceived;
 
                 if ($sisa <= 0) {
-                    throw new \Exception("Produk '{$productId}' sudah diterima sepenuhnya.");
+                    throw new \Exception("Produk sudah diterima sepenuhnya.");
                 }
 
                 if ($amountToReceive > $sisa) {
-                    throw new \Exception("Jumlah penerimaan produk '{$productId}' melebihi sisa stok pembelian ($sisa).");
+                    throw new \Exception("Jumlah penerimaan produk melebihi sisa stok pembelian ($sisa).");
                 }
 
                 // Simpan detail penerimaan

@@ -25,8 +25,7 @@ class UpdateReceiptRequest extends FormRequest
         return [
             'purchase_id' => [
                 'required',
-                'exists:purchases,id',
-                Rule::unique('receipts', 'purchase_id')->ignore($this->route('receipt')),
+                'exists:purchases,id'
             ],
             'receipt_date' => 'required',
             'amount' => 'required',

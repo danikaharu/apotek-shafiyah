@@ -6,6 +6,7 @@ use App\Exports\ReceiptExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreReceiptRequest;
 use App\Http\Requests\Admin\UpdateReceiptRequest;
+use App\Models\DetailPurchase;
 use App\Models\DetailReceipt;
 use App\Models\Product;
 use App\Models\Receipt;
@@ -53,14 +54,42 @@ class ReceiptController extends Controller
             $receipt->save();
 
             foreach ($attr['product_id'] as $index => $productId) {
+                $amountToReceive = $attr['amount'][$index];
+
+                // Ambil detail pembelian produk terkait
+                $detailPurchase = DetailPurchase::where('purchase_id', $attr['purchase_id'])
+                    ->where('product_id', $productId)
+                    ->first();
+
+                if (!$detailPurchase) {
+                    throw new \Exception("Produk dengan ID {$productId} tidak ada dalam detail pembelian.");
+                }
+
+                // Hitung total yang sudah diterima sebelumnya
+                $totalReceived = DetailReceipt::whereHas('receipt', function ($q) use ($attr) {
+                    $q->where('purchase_id', $attr['purchase_id']);
+                })->where('product_id', $productId)->sum('amount');
+
+                $sisa = $detailPurchase->quantity - $totalReceived;
+
+                if ($sisa <= 0) {
+                    throw new \Exception("Produk '{$productId}' sudah diterima sepenuhnya.");
+                }
+
+                if ($amountToReceive > $sisa) {
+                    throw new \Exception("Jumlah penerimaan produk '{$productId}' melebihi sisa stok pembelian ($sisa).");
+                }
+
+                // Simpan detail penerimaan
                 DetailReceipt::create([
                     'receipt_id' => $receipt->id,
                     'product_id' => $productId,
-                    'amount' => $attr['amount'][$index],
+                    'amount' => $amountToReceive,
                 ]);
 
+                // Update stok produk
                 $product = Product::find($productId);
-                $product->stock += $attr['amount'][$index]; // Menambah jumlah penerimaan ke stok produk
+                $product->stock += $amountToReceive;
                 $product->save();
             }
 
@@ -68,7 +97,7 @@ class ReceiptController extends Controller
             return redirect()->back()->with('success', 'Data berhasil ditambah');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->back()->with('success', $th->getMessage());
+            return redirect()->back()->withErrors(['error' => $th->getMessage()]);
         }
     }
 

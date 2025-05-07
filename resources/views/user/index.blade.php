@@ -56,22 +56,25 @@
                                 <div class="col-lg-12">
                                     <div class="row">
                                         @forelse ($products as $product)
-                                            <div class="col-md-3 col-sm-4 mb-1">
-                                                <div class="card h-80">
-                                                    <div class="card-body text-center">
+                                            <div class="col-md-3 col-sm-6 mb-3 d-flex align-items-stretch">
+                                                <div class="card w-100 d-flex flex-column">
+                                                    <div class="card-body text-center d-flex flex-column">
                                                         @if ($product->type_id == 1)
-                                                            <img src="{{ asset('template/dist/img/k.png') }}" class="logo-k"
-                                                                alt="Logo K">
+                                                            <img src="{{ asset('template/dist/img/k.png') }}" class="mb-2"
+                                                                style="height: 24px;" alt="Logo K">
                                                         @endif
                                                         <img src="{{ asset('storage/upload/produk/' . $product->image) }}"
-                                                            class="card-img-top" alt="Produk ">
-                                                        <p class="limited-text"><b>{{ $product->name }},
-                                                            </b>{!! Str::words($product->information, 10, '...') !!}</p>
+                                                            class="card-img-top mb-2"
+                                                            style="max-height: 120px; object-fit: contain;" alt="Produk">
+
+                                                        <p class="flex-grow-1">
+                                                            <strong>{{ $product->name }}</strong><br>
+                                                            {!! Str::words($product->information, 10, '...') !!}
+                                                        </p>
                                                     </div>
-                                                    <div class="card-footer text-center">
-                                                        <h4 class="text-success">@currency($product->price)
-                                                            /
-                                                            {{ $product->unit->name }}</h4>
+                                                    <div class="card-footer bg-white text-center mt-auto">
+                                                        <h5 class="text-success mb-0">@currency($product->price) /
+                                                            {{ $product->unit->name }}</h5>
                                                     </div>
                                                 </div>
                                             </div>
@@ -117,28 +120,35 @@
                                 <div class="col-lg-12">
                                     <div class="row">
                                         @forelse($productDiscount as $item)
-                                            <div class="col-md-3 col-sm-4 mb-1">
-                                                <div class="card h-80">
-                                                    <!-- kalau ada diskon pake ini  -->
-                                                    <div class="ribbon-wrapper ribbon-lg">
-                                                        <div class="ribbon bg-success">
-                                                            <b>Diskon @currency($item->discount_amount) </b>
+                                            <div class="col-md-3 col-sm-6 mb-3 d-flex align-items-stretch">
+                                                <div class="card w-100 d-flex flex-column position-relative">
+                                                    {{-- Ribbon Diskon --}}
+                                                    <div class="ribbon-wrapper ribbon-lg position-absolute"
+                                                        style="z-index: 10;">
+                                                        <div class="ribbon bg-success text-white">
+                                                            <b>Diskon @currency($item->discount_amount)</b>
                                                         </div>
                                                     </div>
-                                                    <!-- batas diskon -->
-                                                    <div class="card-body text-center">
+
+                                                    <div class="card-body text-center d-flex flex-column">
                                                         @if ($item->product->type_id == 1)
-                                                            <img src="{{ asset('template/dist/img/k.png') }}" class="logo-k"
-                                                                alt="Logo K">
+                                                            <img src="{{ asset('template/dist/img/k.png') }}" class="mb-2"
+                                                                style="height: 24px;" alt="Logo K">
                                                         @endif
+
                                                         <img src="{{ asset('storage/upload/produk/' . $item->product->image) }}"
-                                                            class="card-img-top" alt="Produk">
-                                                        <p class="limited-text"><b>{{ $item->product->name }},
-                                                            </b>{!! Str::words($item->product->information, 10, '...') !!}</p>
+                                                            class="card-img-top mb-2"
+                                                            style="max-height: 120px; object-fit: contain;" alt="Produk">
+
+                                                        <p class="flex-grow-1">
+                                                            <strong>{{ $item->product->name }}</strong><br>
+                                                            {!! Str::words($item->product->information, 10, '...') !!}
+                                                        </p>
                                                     </div>
-                                                    <div class="card-footer text-center">
-                                                        <h4 class="text-success">@currency($item->product->price) /
-                                                            {{ $item->product->unit->name }}</h4>
+
+                                                    <div class="card-footer bg-white text-center mt-auto">
+                                                        <h5 class="text-success mb-0">@currency($item->product->price) /
+                                                            {{ $item->product->unit->name }}</h5>
                                                     </div>
                                                 </div>
                                             </div>

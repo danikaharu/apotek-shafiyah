@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreDiscountRequest;
 use App\Http\Requests\Admin\UpdateDiscountRequest;
 use App\Models\Discount;
-use App\Models\Product;
-use RealRashid\SweetAlert\Facades\Alert;
 use Yajra\DataTables\Facades\DataTables;
 
 class DiscountController extends Controller
@@ -26,10 +24,10 @@ class DiscountController extends Controller
                     return 'Rp. ' . number_format($row->product->price, 0, ',', '.');
                 })
                 ->addColumn('selling_price', function ($row) {
-                    return 'Rp. ' . number_format($row->product->price - $row->discount, 0, ',', '.');
+                    return 'Rp. ' . number_format($row->product->price - $row->discount_amount, 0, ',', '.');
                 })
                 ->addColumn('discount', function ($row) {
-                    return 'Rp. ' . number_format($row->discount, 0, ',', '.');
+                    return 'Rp. ' . number_format($row->discount_amount, 0, ',', '.');
                 })
                 ->addColumn('action', 'admin.discount.include.action')
                 ->toJson();
@@ -51,11 +49,13 @@ class DiscountController extends Controller
      */
     public function store(StoreDiscountRequest $request)
     {
-        $attr = $request->validated();
+        $data = $request->validated();
 
-        Discount::create($attr);
+        $data['show_on_dashboard'] = $request->has('show_on_dashboard');
 
-        return redirect()->back();
+        Discount::create($data);
+
+        return redirect()->back()->with('success', 'Diskon berhasil ditambahkan.');
     }
 
     /**

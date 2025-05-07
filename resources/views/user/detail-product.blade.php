@@ -63,7 +63,7 @@
                                                 @if ($product->discount == null)
                                                     @currency($product->price)
                                                 @else
-                                                    @currency($product->price - $product->discount->discount)
+                                                    @currency($product->price - $product->discount->discount_amount)
                                                 @endif
                                             </h2>
                                             <h5 class="mt-0">
@@ -71,25 +71,30 @@
                                                     Diskon : @if ($product->discount == null)
                                                         -
                                                     @else
-                                                        @currency($product->discount->discount)
+                                                        @currency($product->discount->discount_amount)
                                                     @endif
                                                 </small>
                                             </h5>
                                         </div>
 
                                         <div class="row mt-4">
-                                            <a class="btn btn-secondary btn-lg my-2 mr-2" href="{{ url()->previous() }}">
-                                                <i class="fas fa-arrow-left fa-md mr-2"></i>
-                                                Kembali
-                                            </a>
+                                            <div class="col-auto">
+                                                <a class="btn btn-secondary btn-lg my-2" href="{{ url()->previous() }}">
+                                                    <i class="fas fa-arrow-left fa-md mr-2"></i>
+                                                    Kembali
+                                                </a>
+                                            </div>
                                             @if (auth()->user())
-                                                <button type="button"
-                                                    class="btn btn-success btn-block btn-sm my-2 add-to-cart-btn"
-                                                    data-product-id="{{ $product->id }}">
-                                                    <i class="fas fa-shopping-cart"></i> Tambah
-                                                </button>
+                                                <div class="col-auto">
+                                                    <button type="button"
+                                                        class="btn btn-success btn-lg my-2 add-to-cart-btn"
+                                                        data-product-id="{{ $product->id }}">
+                                                        <i class="fas fa-shopping-cart"></i> Tambah
+                                                    </button>
+                                                </div>
                                             @endif
                                         </div>
+
                                     </div>
                                 </div>
                             </div>

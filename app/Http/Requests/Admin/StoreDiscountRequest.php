@@ -23,9 +23,12 @@ class StoreDiscountRequest extends FormRequest
     {
         return [
             'product_id' => 'required|exists:products,id|unique:discounts,product_id',
-            'minimal_purchase' => 'required|numeric',
-            'discount' => 'required|numeric',
-            'end_date' => 'required|date',
+            'type' => 'required|in:seasonal,volume',
+            'discount_amount' => 'required|numeric|min:0',
+            'min_quantity' => 'required_if:type,volume|nullable|integer|min:1',
+            'start_date' => 'required_if:type,seasonal|nullable|date',
+            'end_date' => 'required_if:type,seasonal|nullable|date|after_or_equal:start_date',
+            'show_on_dashboard' => 'nullable|boolean',
         ];
     }
 }

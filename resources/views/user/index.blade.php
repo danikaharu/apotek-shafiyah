@@ -122,7 +122,7 @@
                                                     <!-- kalau ada diskon pake ini  -->
                                                     <div class="ribbon-wrapper ribbon-lg">
                                                         <div class="ribbon bg-success">
-                                                            <b>Diskon @currency($item->discount) </b>
+                                                            <b>Diskon @currency($item->discount_amount) </b>
                                                         </div>
                                                     </div>
                                                     <!-- batas diskon -->
@@ -131,7 +131,7 @@
                                                             <img src="{{ asset('template/dist/img/k.png') }}" class="logo-k"
                                                                 alt="Logo K">
                                                         @endif
-                                                        <img src="{{ asset('storage/upload/produk/' . $product->image) }}"
+                                                        <img src="{{ asset('storage/upload/produk/' . $item->product->image) }}"
                                                             class="card-img-top" alt="Produk">
                                                         <p class="limited-text"><b>{{ $item->product->name }},
                                                             </b>{!! Str::words($item->product->information, 10, '...') !!}</p>

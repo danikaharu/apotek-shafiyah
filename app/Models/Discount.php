@@ -9,7 +9,15 @@ class Discount extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_id', 'minimal_purchase', 'discount', 'end_date'];
+    protected $fillable = [
+        'product_id',
+        'type',
+        'discount_amount',
+        'min_quantity',
+        'start_date',
+        'end_date',
+        'show_on_dashboard',
+    ];
 
     public function product()
     {

@@ -53,12 +53,7 @@
                                 <div class="modal-body">
                                     <form id="formDiscount" method="POST">
                                         @csrf
-                                        <div class="form-group">
-                                            <label class="text-secondary">Tanggal Berakhir <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" name="end_date">
-                                            <span class="text-danger" id="end_date_error"></span>
-                                        </div>
+
                                         <div class="form-group">
                                             <label for="">Nama Obat <span class="text-danger">*</span></label>
                                             <select id="selectProduct" class="form-control select2" name="product_id"
@@ -73,34 +68,74 @@
                                             </select>
                                             <span class="text-danger" id="product_id_error"></span>
                                         </div>
+
                                         <div class="form-group">
-                                            <label class="text-secondary">Harga Jual </label>
+                                            <label class="text-secondary">Harga Jual</label>
                                             <input type="text" id="product_price" class="form-control" readonly>
                                         </div>
+
                                         <div class="form-group">
+                                            <label for="type" class="text-secondary">Jenis Diskon <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="type" id="discount_type" class="form-control" required>
+                                                <option value="">-- Pilih Jenis --</option>
+                                                <option value="seasonal">Jangka Pendek / Musiman</option>
+                                                <option value="volume">Diskon Volume (1 Box / 10 Strip)</option>
+                                            </select>
+                                            <span class="text-danger" id="type_error"></span>
+                                        </div>
+
+                                        <div class="form-group seasonal-field d-none">
+                                            <label class="text-secondary">Tanggal Mulai <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" name="start_date">
+                                            <span class="text-danger" id="start_date_error"></span>
+                                        </div>
+
+                                        <div class="form-group seasonal-field d-none">
+                                            <label class="text-secondary">Tanggal Berakhir <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" name="end_date">
+                                            <span class="text-danger" id="end_date_error"></span>
+                                        </div>
+
+                                        <div class="form-group volume-field d-none">
                                             <label class="text-secondary">Minimal Pembelian <span
                                                     class="text-danger">*</span></label>
-                                            <input type="number" class="form-control" name="minimal_purchase">
-                                            <span class="text-danger" id="minimal_purchase_error"></span>
+                                            <input type="number" class="form-control" name="min_quantity">
+                                            <span class="text-danger" id="min_quantity_error"></span>
                                         </div>
+
                                         <div class="form-group">
                                             <label class="text-secondary">Diskon <span class="text-danger">*</span> (Ex:
                                                 5000)</label>
-                                            <input type="number" class="form-control" name="discount">
-                                            <span class="text-danger" id="discount_error"></span>
+                                            <input type="number" class="form-control" name="discount_amount">
+                                            <span class="text-danger" id="discount_amount_error"></span>
                                         </div>
-                                </div>
-                                <div class="modal-footer justify-content-between">
-                                    <button type="submit" class="btn btn-success btn-sm btn-block"><i class="fa fa-plus"
-                                            aria-hidden="true" style="font-size: 10px;"></i> Tambah</button>
+
+                                        <input type="hidden" name="show_on_dashboard" value="0">
+                                        <div class="form-group form-check">
+                                            <input type="checkbox" class="form-check-input" name="show_on_dashboard"
+                                                value="1" id="show_on_dashboard">
+                                            <label class="form-check-label" for="show_on_dashboard">Tampilkan di
+                                                Dashboard</label>
+                                        </div>
+
+                                        <div class="modal-footer justify-content-between">
+                                            <button type="submit" class="btn btn-success btn-sm btn-block"><i
+                                                    class="fa fa-plus" aria-hidden="true" style="font-size: 10px;"></i>
+                                                Tambah</button>
+                                        </div>
                                     </form>
                                 </div>
+                                <!-- /.modal-content -->
                             </div>
-                            <!-- /.modal-content -->
+                            <!-- /.modal-dialog -->
                         </div>
-                        <!-- /.modal-dialog -->
+                        <!-- /.modal diskon -->
+
+
                     </div>
-                    <!-- /.modal diskon -->
 
                     <table id="example" class="table table-bordered table-striped table-sm">
                         <thead class="bg-info">
@@ -118,13 +153,12 @@
                         <tbody class="text-center">
                         </tbody>
                     </table>
+                    <!-- /.card-body -->
                 </div>
-                <!-- /.card-body -->
             </div>
+            <!-- /.card -->
         </div>
-        <!-- /.card -->
-    </div>
-    <!-- /.col -->
+        <!-- /.col -->
     </div>
     <!-- /.row -->
 @endsection
@@ -143,6 +177,7 @@
     <script src="{{ asset('template/plugins/select2/js/select2.full.min.js') }}"></script>
     <script>
         $(document).ready(function() {
+
             $('#example').DataTable({
                 processing: true,
                 serverSide: true,
@@ -175,6 +210,13 @@
                         searchable: false
                     },
                 ],
+            });
+
+
+            $('#discount_type').change(function() {
+                let selected = $(this).val();
+                $('.seasonal-field').toggleClass('d-none', selected !== 'seasonal');
+                $('.volume-field').toggleClass('d-none', selected !== 'volume');
             });
 
             //Initialize Select2 Elements

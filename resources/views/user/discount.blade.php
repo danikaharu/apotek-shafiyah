@@ -40,8 +40,10 @@
                                                 <i class="text-muted"
                                                     style="text-decoration: line-through;">@currency($discount->product->price)</i>
                                                 <h6 class="text-success">
-                                                    @currency($discount->product->price - $discount->discount) /
+                                                    @currency($discount->product->price - $discount->discount_amount) /
                                                     {{ $discount->product->unit->name }}</h6>
+                                                <h6 class="text-success">Stok :
+                                                    {{ $discount->product->stock }}</h6>
                                                 <a href="{{ route('detail.product', $discount->product->id) }}"
                                                     class="btn btn-info btn-block btn-sm">
                                                     <i class="fas fa-eye"></i> Detail

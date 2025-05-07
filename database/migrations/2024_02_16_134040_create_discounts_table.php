@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('discounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained('products');
-            $table->string('minimal_purchase');
-            $table->string('discount');
-            $table->date('end_date');
+            $table->foreignId('product_id');
+            $table->enum('type', ['seasonal', 'volume']); // seasonal = jangka pendek, volume = jangka panjang
+            $table->decimal('discount_amount');
+            $table->integer('min_quantity')->nullable(); // hanya untuk diskon volume
+            $table->date('start_date')->nullable(); // hanya untuk diskon seasonal
+            $table->date('end_date')->nullable();   // hanya untuk diskon seasonal
+            $table->boolean('show_on_dashboard')->default(true); // untuk checklist
             $table->timestamps();
         });
     }

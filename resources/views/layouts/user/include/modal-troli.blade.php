@@ -9,7 +9,7 @@
                 </button>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body" id="cart-modal-body">
                 <div class="text-center">
                     <div class="spinner-border text-success" role="status">
                         <span class="sr-only">Loading...</span>
@@ -18,12 +18,14 @@
             </div>
 
             <div class="modal-footer">
-                <form action="{{ route('store.order') }}" method="POST" style="display: inline;">
-                    @csrf
-                    <button id="checkout-btn" type="submit" class="btn btn-success">
-                        <i class="fas fa-credit-card"></i> Checkout
-                    </button>
-                </form>
+                @auth
+                    <form action="{{ route('store.order') }}" method="POST" style="display: inline;">
+                        @csrf
+                        <button id="checkout-btn" type="submit" class="btn btn-success">
+                            <i class="fas fa-credit-card"></i> Checkout
+                        </button>
+                    </form>
+                @endauth
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -41,9 +43,12 @@
                 var quantity = parseInt($row.find('.quantity').text());
                 var stock = parseInt($row.find('.stock').text());
 
+                // Disable tombol increase jika stok habis
                 if ($button.data('action') === 'increase') {
                     $button.prop('disabled', quantity >= stock);
-                } else if ($button.data('action') === 'decrease') {
+                }
+                // Disable tombol decrease jika jumlah sudah 1
+                else if ($button.data('action') === 'decrease') {
                     $button.prop('disabled', quantity <= 1);
                 }
             });
@@ -69,8 +74,7 @@
                 success: function(response) {
                     $('#cart-modal-body').html(response.cart_html);
                     updateCartTotal();
-                    updateQuantityButtons
-                (); // Memperbarui status tombol setelah memuat troli
+                    updateQuantityButtons();
                 },
                 error: function(xhr) {
                     $('#cart-modal-body').html(
@@ -96,7 +100,7 @@
             if (newQuantity < 1 || newQuantity > stock) return;
 
             $.ajax({
-                url: '/cart/update-quantity/' + cartItemId,
+                url: '/cart/update-quantity/' + cartItemId, // Pastikan URL benar sesuai rute
                 type: 'PATCH',
                 data: {
                     quantity: newQuantity,
@@ -123,7 +127,7 @@
             var cartItemId = $(this).data('id');
 
             $.ajax({
-                url: '/cart/remove/' + cartItemId,
+                url: '/cart/remove/' + cartItemId, // Pastikan URL benar sesuai rute
                 type: 'DELETE',
                 data: {
                     _token: '{{ csrf_token() }}'

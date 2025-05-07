@@ -15,7 +15,7 @@ class DashboardController extends Controller
     {
         $products = Product::where('stock', '>', 0)->latest()->limit(4)->get();
 
-        $productDiscount = Discount::with('product')->latest()->limit(4)->get();
+        $productDiscount = Discount::with('product')->where('show_on_dashboard', true)->latest()->limit(4)->get();
 
         $banners = Banner::latest()->limit(3)->get();
 
@@ -31,7 +31,7 @@ class DashboardController extends Controller
 
     public function discount()
     {
-        $discounts = Discount::with('product')->latest()->paginate(12);
+        $discounts = Discount::with('product')->where('show_on_dashboard', true)->latest()->paginate(12);
 
         return view('user.discount', compact('discounts'));
     }

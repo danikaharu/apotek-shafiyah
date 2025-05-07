@@ -36,16 +36,28 @@ class CartController extends Controller
             ], 400);
         }
 
+        // Cek apakah produk memiliki diskon
+        $discountAmount = 0;
+        $finalPrice = $product->price;
+
+        if ($product->discount) {
+            $discountAmount = $product->discount->discount_amount;
+        }
+
+        // Hitung harga final setelah diskon
+        $finalPrice = $product->price - $discountAmount;
+
+        // Update atau buat detail produk dalam keranjang
         if ($detailCart) {
             $detailCart->increment('amount');
-            $detailCart->update(['total_price' => $detailCart->amount * $detailCart->price]);
+            $detailCart->update(['total_price' => $detailCart->amount * $finalPrice]);
         } else {
             $cart->details()->create([
                 'product_id' => $productId,
-                'price' => $product->price,
-                'discount' => $product->discount->discount ?? 0,
+                'price' => $finalPrice,  // Simpan harga setelah diskon
+                'discount' => $discountAmount,
                 'amount' => 1,
-                'total_price' => $product->price
+                'total_price' => $finalPrice  // Total harga untuk satu item
             ]);
         }
 

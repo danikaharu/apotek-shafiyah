@@ -1,4 +1,4 @@
-@if (!empty($cart) && $cart->details && $cart->details->count() > 0)
+@if ($cart && $cart->details->isNotEmpty())
     <div class="table-responsive">
         <table class="table table-hover">
             <thead class="thead-light">
@@ -12,8 +12,26 @@
             </thead>
             <tbody>
                 @foreach ($cart->details as $item)
+                    @php
+                        $product = $item->product;
+                        $discount = $product->discount;
+
+                        $isVolumeDiscount =
+                            $discount && $discount->type === 'volume' && $item->amount >= $discount->min_quantity;
+                        $isSeasonalDiscount =
+                            $discount &&
+                            $discount->type === 'seasonal' &&
+                            now()->between($discount->start_date, $discount->end_date);
+
+                        $isDiscounted = $isVolumeDiscount || $isSeasonalDiscount;
+                        $discountAmount = $isDiscounted ? $discount->discount_amount : 0;
+
+                        $finalPrice = $product->price - $discountAmount;
+                        $finalTotal = $finalPrice * $item->amount;
+                    @endphp
+
                     <tr id="cart-item-{{ $item->id }}">
-                        <td>{{ $item->product->name }}</td>
+                        <td>{{ $product->name }}</td>
                         <td>
                             <button class="btn btn-sm btn-info update-quantity" data-id="{{ $item->id }}"
                                 data-action="decrease">-</button>
@@ -21,10 +39,21 @@
                             <button class="btn btn-sm btn-info update-quantity" data-id="{{ $item->id }}"
                                 data-action="increase">+</button>
                             <br>
-                            <small class="text-muted">Stok: {{ $item->product->stock }}</small>
+                            <small class="text-muted">Stok: <span class="stock">{{ $product->stock }}</span></small>
                         </td>
-                        <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-                        <td>Rp <span class="item-total">{{ number_format($item->total_price, 0, ',', '.') }}</span></td>
+                        <td>
+                            @if ($isDiscounted)
+                                <del class="text-muted">Rp {{ number_format($product->price, 0, ',', '.') }}</del><br>
+                                <strong>Rp {{ number_format($finalPrice, 0, ',', '.') }}</strong>
+                                <br>
+                                <small class="badge badge-success">
+                                    {{ $discount->type === 'volume' ? 'Diskon Volume' : 'Diskon Musiman' }}
+                                </small>
+                            @else
+                                Rp {{ number_format($product->price, 0, ',', '.') }}
+                            @endif
+                        </td>
+                        <td>Rp <span class="item-total">{{ number_format($finalTotal, 0, ',', '.') }}</span></td>
                         <td>
                             <button class="btn btn-sm btn-danger remove-item" data-id="{{ $item->id }}">
                                 <i class="fas fa-trash"></i> Hapus
@@ -32,6 +61,7 @@
                         </td>
                     </tr>
                 @endforeach
+
             </tbody>
         </table>
     </div>

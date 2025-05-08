@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
+use App\Models\Product;
 use App\Models\Recipe;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -53,7 +55,8 @@ class RecipeController extends Controller
     public function show(Recipe $recipe)
     {
         $recipe->load('customer');
-        return view('admin.recipe.show', compact('recipe'));
+        $allProducts = Product::all();
+        return view('admin.recipe.show', compact('recipe', 'allProducts'));
     }
 
     /**
@@ -75,15 +78,50 @@ class RecipeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Recipe $recipe) {}
-
-    public function approveRecipe(Recipe $recipe)
+    public function destroy(Recipe $recipe)
     {
-        $recipe->update([
-            'status' => 2
+        // 
+    }
+
+    public function approveRecipe(Request $request, Recipe $recipe)
+    {
+        $request->validate([
+            'products' => 'required|array|min:1',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.price' => 'required|numeric|min:0',
         ]);
 
-        return redirect()->route('admin.recipe.index');
+        $customerId = $recipe->customer_id;
+        $adminId = auth()->id();
+
+        $cart = Cart::firstOrCreate(
+            ['customer_id' => $customerId],
+            ['admin_id' => $adminId, 'total_price' => 0]
+        );
+
+        $total = 0;
+        foreach ($request->products as $item) {
+            $product = Product::find($item['product_id']);
+            $amount = $item['quantity'];
+            $price = $item['price'];
+            $totalPrice = $amount * $price;
+
+            $cart->details()->create([
+                'product_id' => $product->id,
+                'price' => $price,
+                'discount' => $item->discount->discount_amount ?? 0,
+                'amount' => $amount,
+                'total_price' => $totalPrice,
+            ]);
+
+            $total += $totalPrice;
+        }
+
+        $cart->update(['total_price' => $total]);
+        $recipe->update(['status' => 2]);
+
+        return redirect()->route('admin.recipe.index')->with('success', 'Resep disetujui dan produk ditambahkan ke keranjang.');
     }
 
     public function rejectRecipe(Recipe $recipe)
@@ -92,6 +130,6 @@ class RecipeController extends Controller
             'status' => 3
         ]);
 
-        return redirect()->route('admin.recipe.index');
+        return redirect()->route('admin.recipe.index')->with('error', 'Resep telah ditolak.');
     }
 }

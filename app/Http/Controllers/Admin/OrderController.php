@@ -29,7 +29,7 @@ class OrderController extends Controller
             return DataTables::of($orders)
                 ->addIndexColumn()
                 ->addColumn('customer', function ($row) {
-                    return $row->user->customer ?  $row->user->customer->full_name : '-';
+                    return $row->user && $row->user->customer ? $row->user->customer->full_name : '-';
                 })
                 ->addColumn('created_at', function ($row) {
                     return Carbon::parse($row->created_at)->format('M d Y');

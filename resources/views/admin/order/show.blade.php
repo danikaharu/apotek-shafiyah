@@ -49,7 +49,7 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        @if ($order->user->customer->image != null)
+                                        @if ($order->user && $order->user->customer && $order->user->customer->image != null)
                                             <img src="{{ asset('storage/upload/user/' . $order->user->customer->image) }}"
                                                 alt="User" style="max-width:40px;">
                                         @else

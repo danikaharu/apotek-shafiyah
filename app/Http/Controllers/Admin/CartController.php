@@ -47,7 +47,7 @@ class CartController extends Controller
             ['admin_id' => $adminId, 'total_price' => 0]
         );
 
-        $product = Product::findOrFail($productId);
+        $product = Product::with('discount')->findOrFail($productId);
         $detailCart = DetailCart::where('cart_id', $cart->id)
             ->where('product_id', $productId)
             ->first();
@@ -61,7 +61,7 @@ class CartController extends Controller
                 'cart_id' => $cart->id,
                 'product_id' => $productId,
                 'price' => $product->price,
-                'discount' => $product->discount->discount ?? 0,
+                'discount' => $product->discount->discount_amount ?? 0,
                 'amount' => 1,
                 'total_price' => $product->price
             ]);

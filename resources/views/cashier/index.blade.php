@@ -147,20 +147,47 @@
                         <div class="row">
                             @foreach ($products as $product)
                                 <div class="col-lg-3 col-sm-12">
-                                    <div class="card"
-                                        style="box-shadow: 1px 1px 5px 2px rgb(186, 184, 184);text-align:center;">
+                                    <div class="card d-flex flex-column"
+                                        style="box-shadow: 1px 1px 5px 2px rgb(186, 184, 184); text-align:center;">
+
                                         <img src="{{ asset('storage/upload/produk/' . $product->image) }}"
-                                            style="width: auto; height:150px;">
-                                        <b>{{ $product->name }}</b>
-                                        <span class="text-success">@currency($product->price)</span>
-                                        <br>
-                                        <!-- Tombol Tambah -->
-                                        <button data-product-id="{{ $product->id }}" type="button"
-                                            class="btn btn-success m-2 tambahBaris"><i
-                                                class="fas fa-shopping-cart"></i>Tambah</button>
+                                            class="card-img-top" style="width: auto; height:150px;">
+
+                                        <div class="card-body flex-grow-1">
+                                            <b>{{ $product->name }}</b>
+                                            <br>
+                                            <span class="text-success">@currency($product->price)</span>
+
+                                            <div class="discount-info mt-2">
+                                                @if ($product->discount)
+                                                    @if ($product->discount->discount_amount > 0)
+                                                        <!-- Diskon Nominal -->
+                                                        <span class="text-danger" style="font-size: 14px;">
+                                                            -@currency($product->discount->discount_amount)
+                                                        </span>
+                                                    @endif
+
+                                                    @if ($product->discount->discount_percentage > 0)
+                                                        <!-- Diskon Persentase -->
+                                                        <span class="text-danger" style="font-size: 14px;">
+                                                            -{{ $product->discount->discount_percentage }}%
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted" style="font-size: 14px;">No Discount</span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="card-footer text-center">
+                                            <button data-product-id="{{ $product->id }}" type="button"
+                                                class="btn btn-success m-2 tambahBaris"><i
+                                                    class="fas fa-shopping-cart"></i>Tambah</button>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
+
                         </div>
 
                     </div>
@@ -201,14 +228,22 @@
                     var amount = parseInt($(this).find('.amount').text());
                     var price = parseFloat($(this).find('.price').text());
                     var discount = parseFloat($(this).find('.discount').text());
+                    var totalPrice = parseFloat($(this).find('.total-price').text());
 
-                    // Hitung total harga untuk produk tersebut dan tambahkan ke total keseluruhan
-                    total += amount * (price - discount);
+                    // Hitung total harga setelah diskon per produk
+                    var grandTotal = (price * amount) - discount;
+
+                    // Tambahkan ke total keseluruhan
+                    total += grandTotal;
+
                 });
 
                 // Tampilkan total harga yang diperbarui
-                $('h4#total').text('Rp. ' + total);
+                $('h4#total').text('Rp. ' + total.toFixed(0)); // Format tanpa desimal
             }
+
+
+
 
             $(document).on('click', '.hapusBaris', function() {
                 var row = $(this).closest('tr');
@@ -268,20 +303,33 @@
                             var discountCell = existingRow.find('.discount');
                             var totalPriceCell = existingRow.find('.total-price');
 
-                            var amount = detail.amount;
-                            var totalPrice = amount * detail.price;
+                            var amount = detail.amount; // Kuantiti produk
+                            var price = detail.price; // Harga per item
+                            var discount = detail.discount; // Diskon per item
 
+                            // Hitung total harga setelah diskon
+                            var totalDiscount = discount *
+                                amount; // Total diskon untuk jumlah produk
+                            var totalPrice = (price * amount) -
+                                totalDiscount; // Total harga setelah diskon
+
+                            // Perbarui teks pada tabel
                             amountCell.text(amount);
-                            totalPriceCell.text(totalPrice);
+                            discountCell.text(
+                                totalDiscount); // Menampilkan total diskon yang sesuai
+                            totalPriceCell.text(
+                                totalPrice); // Menampilkan total harga setelah diskon
                         } else {
-                            existingRow.empty();
-
+                            // Jika produk belum ada dalam tabel, tambahkan baris baru
                             var newRow = "<tr data-product-id='" + productId + "'>" +
                                 "<td>" + detail.product.name + "</td>" +
                                 "<td class='amount'>" + detail.amount + "</td>" +
                                 "<td class='price'>" + detail.price + "</td>" +
-                                "<td class='discount'>" + detail.discount + "</td>" +
-                                "<td class='total-price'>" + detail.total_price + "</td>" +
+                                "<td class='discount'>" + (detail.discount * detail.amount) +
+                                "</td>" + // Total diskon untuk jumlah produk
+                                "<td class='total-price'>" + (detail.price - detail.discount) +
+                                "</td>" +
+                                // Total harga setelah diskon
                                 "<td><button class='btn btn-danger btn-sm hapusBaris' data-cart-id='" +
                                 cartId + "'>Hapus</button></td>" +
                                 "</tr>";

@@ -7,7 +7,7 @@
         <!-- /.form-group -->
         <div class="form-group">
             <label>No SP<span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="purchase_number">
+            <input type="text" class="form-control" name="purchase_number">
         </div>
     </div>
     <!-- /.col -->

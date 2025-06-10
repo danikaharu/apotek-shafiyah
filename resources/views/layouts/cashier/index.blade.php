@@ -23,7 +23,7 @@
         <!-- Navbar -->
         <nav class="main-header navbar navbar-expand navbar-info navbar-light">
             <a href="{{ route('admin.dashboard') }}" class="brand-link bg-info">
-                <img src="{{ asset('template/dist/img/logo ular.png') }}" alt="Logo" class="brand-image img-circle"
+                <img src="{{ asset('template/dist/img/ular.png') }}" alt="Logo" class="brand-image img-circle"
                     style="opacity: .8">
                 <span class="brand-text font-weight-light">{{ Str::upper(config('app.name')) }}</span>
             </a>

@@ -2,7 +2,7 @@
 <nav class="main-header navbar navbar-expand-md navbar-light bg-success">
     <div class="container">
         <a href="{{ route('dashboard') }}" class="navbar-brand d-flex align-items-center">
-            <img src="{{ asset('template/dist/img/logo ular.png') }}" alt="Logo" class="brand-image img-circle"
+            <img src="{{ asset('template/dist/img/ular.png') }}" alt="Logo" class="brand-image img-circle"
                 style="opacity: .8; width: 30px; height: 30px;">
             <span class="brand-text font-weight-light text-white ml-2">{{ Str::upper(config('app.name')) }}</span>
         </a>

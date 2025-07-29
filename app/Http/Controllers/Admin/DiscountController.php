@@ -51,8 +51,6 @@ class DiscountController extends Controller
     {
         $data = $request->validated();
 
-        $data['show_on_dashboard'] = $request->has('show_on_dashboard');
-
         Discount::create($data);
 
         return redirect()->back()->with('success', 'Diskon berhasil ditambahkan.');

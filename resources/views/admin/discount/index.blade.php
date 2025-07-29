@@ -116,7 +116,7 @@
                                         <input type="hidden" name="show_on_dashboard" value="0">
                                         <div class="form-group form-check">
                                             <input type="checkbox" class="form-check-input" name="show_on_dashboard"
-                                                value="1" id="show_on_dashboard">
+                                                id="show_on_dashboard">
                                             <label class="form-check-label" for="show_on_dashboard">Tampilkan di
                                                 Dashboard</label>
                                         </div>

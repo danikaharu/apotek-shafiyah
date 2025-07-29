@@ -91,7 +91,7 @@
                         <tr>
                             <td>Total</td>
                             <td>:</td>
-                            <td>@currency($order->total_price)</td>
+                            <td>@currency($order->total_price - $discount)</td>
                         </tr>
                     </tbody>
                 </table>

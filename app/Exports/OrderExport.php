@@ -36,7 +36,7 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 
     public function collection()
     {
-        return DetailOrder::with(['product'])
+        return DetailOrder::with(['product.purchases', 'product.type', 'order'])
             ->whereHas('order', function ($query) {
                 $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
             })->get();
@@ -44,7 +44,8 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 
     public function map($detailOrder): array
     {
-        $buyPrice = 0; // Ubah jika ingin ambil dari purchase
+        $purchase = $detailOrder->product->purchases->sortByDesc('order_date')->first();
+        $buyPrice = $purchase?->pivot->price ?? 0;
         $sellPrice = $detailOrder->product->price ?? 0;
         $amount = $detailOrder->amount;
 

@@ -33,7 +33,9 @@ class Product extends Model
 
     public function purchases()
     {
-        return $this->belongsToMany(Purchase::class, 'detail_purchases', 'product_id', 'purchase_id');
+        return $this->belongsToMany(Purchase::class, 'detail_purchases', 'product_id', 'purchase_id')
+            ->withPivot('price', 'quantity', 'total_price')
+            ->withTimestamps();
     }
 
     public function discount()

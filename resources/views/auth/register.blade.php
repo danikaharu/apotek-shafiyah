@@ -8,6 +8,22 @@
     <form action="{{ route('register') }}" method="post">
         @csrf
         <div class="input-group mb-3">
+            <input type="text" class="form-control @error('email')
+                is-invalid
+            @enderror"
+                placeholder="Email" name="email">
+            <div class="input-group-append">
+                <div class="input-group-text">
+                    <span class="fas fa-user"></span>
+                </div>
+            </div>
+            @error('email')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+            @enderror
+        </div>
+        <div class="input-group mb-3">
             <input type="text" class="form-control @error('username')
                 is-invalid
             @enderror"

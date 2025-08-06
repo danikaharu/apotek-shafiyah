@@ -15,7 +15,7 @@ class CartController extends Controller
     {
         $productId = $request->input('product_id');
         $adminId = 1;
-        $customerId = auth()->user()->id;
+        $customerId = auth()->user()->customer->id;
 
         $product = Product::findOrFail($productId);
 
@@ -139,28 +139,71 @@ class CartController extends Controller
     // Method to update the total price of the cart
     private function updateCartTotal($cart)
     {
-        $cart->total_price = $cart->details ? $cart->details->sum('total_price') : 0;
+        $total = $cart->details ? $cart->details->sum('total_price') : 0;
+        $customer = auth()->user()->customer;
+
+        // Diskon member berdasarkan level
+        $memberDiscountPercent = $customer->member_discount ?? 0;
+        $memberDiscount = ($memberDiscountPercent / 100) * $total;
+
+        // Diskon loyalitas 5% setiap 5 transaksi selesai
+        $loyaltyDiscountPercent = floor($customer->finished_orders_count / 5) * 5;
+        if ($loyaltyDiscountPercent > 0) {
+            $loyaltyDiscount = ($loyaltyDiscountPercent / 100) * ($total - $memberDiscount);
+        } else {
+            $loyaltyDiscount = 0;
+        }
+
+        $finalTotal = $total - $memberDiscount - $loyaltyDiscount;
+
+        $cart->total_price = $finalTotal;
         $cart->save();
     }
 
 
     public function getCartTotal()
     {
-        $customerId = auth()->id();
-        $cart = Cart::with('details')->where('customer_id', $customerId)->first();
+        $customer = auth()->user()->customer;
+        $cart = Cart::with(['details.product.discount'])->where('customer_id', $customer->id)->first();
 
-        $totalPrice = $cart ? $cart->details->sum('total_price') : 0;
-        $totalItems = $cart ? $cart->details->sum('amount') : 0;
+        $subtotal = 0;
+        $productDiscount = 0;
+
+        foreach ($cart?->details ?? [] as $item) {
+            $price = $item->product->price;
+            $amount = $item->amount;
+            $productDiscountNominal = $item->product->discount?->discount_amount ?? 0;
+
+            $subtotal += $price * $amount;
+            $productDiscount += $productDiscountNominal * $amount;
+        }
+
+        $afterProductDiscount = $subtotal - $productDiscount;
+
+        // Diskon Member
+        $memberDiscountPercent = $customer->member_discount ?? 0;
+        $memberDiscount = ($memberDiscountPercent / 100) * $afterProductDiscount;
+
+        // Diskon Loyalitas (5% setiap 5 transaksi)
+        $loyaltyDiscountPercent = floor($customer->finished_orders_count / 5) * 5;
+        $loyaltyDiscount = ($loyaltyDiscountPercent / 100) * ($afterProductDiscount - $memberDiscount);
+
+        $grandTotal = $afterProductDiscount - $memberDiscount - $loyaltyDiscount;
 
         return response()->json([
-            'total_price' => $totalPrice,
-            'total_items' => $totalItems
+            'subtotal' => number_format($subtotal, 0, ',', '.'),
+            'product_discount' => number_format($productDiscount, 0, ',', '.'),
+            'member_discount' => number_format($memberDiscount, 0, ',', '.'),
+            'loyalty_discount' => number_format($loyaltyDiscount, 0, ',', '.'),
+            'total' => number_format($grandTotal, 0, ',', '.'),
+            'total_price' => $grandTotal,
+            'total_items' => $cart?->details->sum('amount') ?? 0
         ]);
     }
 
     public function getCart()
     {
-        $customerId = auth()->id();
+        $customerId = auth()->user()->customer->id;
         $cart = Cart::where('customer_id', $customerId)->with('details.product')->first();
 
         $cartHtml = view('layouts.user.include.cart_modal_content', compact('cart'))->render();

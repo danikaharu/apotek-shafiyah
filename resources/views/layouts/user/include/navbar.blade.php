@@ -21,6 +21,19 @@
 
             <!-- User Menu -->
             <ul class="navbar-nav ml-auto">
+                @php
+                    $customer = auth()->user()->customer ?? null;
+                    $memberLevel = $customer?->memberLevel?->name ?? 'Basic';
+                @endphp
+
+                @if ($customer)
+                    <li class="nav-item d-flex align-items-center mr-3">
+                        <span class="text-white small">
+                            Level Member: <strong>{{ $memberLevel }}</strong>
+                        </span>
+                    </li>
+                @endif
+
                 @auth
                     <li class="nav-item d-flex align-items-center">
                         <a class="nav-link text-white" href="{{ route('account.index') }}">Profil Saya</a>
@@ -48,7 +61,7 @@
 <nav class="main-header navbar navbar-expand-md navbar-light bg-white">
     <div class="container">
         <div class="btn-group mr-3">
-            <button type="button" class="btn btn-outline-success dropdown-toggle" data-toggle="dropdown"
+            <button type="button" class="btn btn-outline-success btn-sm dropdown-toggle" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
                 Kategori Obat
             </button>
@@ -69,7 +82,7 @@
         <ul class="navbar-nav ml-auto">
             <li class="nav-item mr-2">
                 <a href="#" data-toggle="modal" data-target="#modal-troli"
-                    class="btn btn-outline-success position-relative" id="btn-troli">
+                    class="btn btn-outline-success btn-sm position-relative" id="btn-troli">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                         id="badge-cart-count">

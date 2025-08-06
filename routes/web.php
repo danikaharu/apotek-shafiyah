@@ -77,6 +77,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'auth'], fu
     // Unit
     Route::resource('/unit', App\Http\Controllers\Admin\UnitController::class);
 
+    // Member Level
+    Route::resource('/member-level', App\Http\Controllers\Admin\MemberLevelController::class);
+
     // Order
     Route::resource('/order', App\Http\Controllers\Admin\OrderController::class);
     Route::get('/approveOrder/{order}', [App\Http\Controllers\Admin\OrderController::class, 'approve'])->name('approve.order');

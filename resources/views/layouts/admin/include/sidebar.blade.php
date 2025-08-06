@@ -99,6 +99,15 @@
                 </ul>
             </li>
             <li class="nav-item">
+                <a href="{{ route('admin.member-level.index') }}"
+                    class="nav-link {{ request()->is('admin/member-level', 'admin/member-level/*') ? ' active' : '' }}">
+                    <i class="nav-icon fa fa-medal"></i>
+                    <p>
+                        Level Member
+                    </p>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="{{ route('admin.order.index') }}"
                     class="nav-link {{ request()->is('admin/order', 'admin/order/*') ? ' active' : '' }}">
                     <i class="nav-icon fa fa-calculator"></i>

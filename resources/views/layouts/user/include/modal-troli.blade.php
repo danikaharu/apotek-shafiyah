@@ -60,8 +60,17 @@
                 url: '{{ route('cart.total') }}',
                 type: 'GET',
                 success: function(response) {
-                    $('#cart-total-price').text('Rp ' + response.total_price);
+                    $('#cart-total-price').text('Rp ' + response.total); // badge jika ada
                     $('#badge-cart-count').text(response.total_items);
+
+                    // Update nilai detail
+                    if ($('#cart-subtotal').length) {
+                        $('#cart-subtotal').text('Rp ' + response.subtotal);
+                        $('#cart-discount-product').text('- Rp ' + response.product_discount);
+                        $('#cart-discount-member').text('- Rp ' + response.member_discount);
+                        $('#cart-discount-loyalty').text('- Rp ' + response.loyalty_discount);
+                        $('#cart-grand-total').text('Rp ' + response.total);
+                    }
                 }
             });
         }

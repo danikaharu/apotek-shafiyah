@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\DetailOrder;
 use App\Models\Order;
 use App\Models\Profile;
+use App\Services\MemberLevelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Midtrans\Snap;
@@ -30,9 +31,13 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            $customerId = auth()->user()->id;
-            $total_price = (int) $request->total_price; // atau bisa juga dihitung ulang dari cart
-            $cart = Cart::where('customer_id', $customerId)->with('details')->first();
+            $user = auth()->user();
+            $customer = $user->customer;
+            $customerId = $user->id;
+
+            $cart = Cart::where('customer_id', $customerId)
+                ->with('details.product')
+                ->first();
 
             if (!$cart || $cart->details->isEmpty()) {
                 return response()->json([
@@ -43,39 +48,51 @@ class OrderController extends Controller
             // Validasi stok
             foreach ($cart->details as $detail) {
                 $product = $detail->product;
-
-                if (!$product) {
+                if (!$product || $product->stock < $detail->amount) {
                     DB::rollBack();
                     return response()->json([
-                        'message' => 'Produk tidak ditemukan.'
-                    ], 400);
-                }
-
-                if ($product->stock < $detail->amount) {
-                    DB::rollBack();
-                    return response()->json([
-                        'message' => "Stok produk {$product->name} hanya tersedia {$product->stock}, Anda memesan {$detail->amount}."
+                        'message' => "Stok produk {$product->name} hanya tersedia {$product->stock}."
                     ], 400);
                 }
             }
 
-            // Buat order baru
+            // Subtotal dari cart (sudah termasuk diskon produk per item)
+            $subtotal = $cart->details->sum('total_price');
+
+            // === DISKON MEMBER LEVEL ===
+            $memberDiscountPercent = $customer->memberLevel->discount_percent ?? 0;
+            $memberDiscountAmount = ($memberDiscountPercent / 100) * $subtotal;
+
+            // === DISKON LOYALITAS ===
+            $completedOrders = Order::where('customer_id', $customer->id)
+                ->where('status', 6) // Status 6 = selesai
+                ->count();
+
+            $loyaltyDiscountPercent = floor($completedOrders / 5) * 5; // 5% tiap kelipatan 5 order
+            if ($loyaltyDiscountPercent > 15) $loyaltyDiscountPercent = 15; // optional batas maksimal
+            $loyaltyDiscountAmount = ($loyaltyDiscountPercent / 100) * $subtotal;
+
+            // === TOTAL ===
+            $finalTotal = $subtotal - $memberDiscountAmount - $loyaltyDiscountAmount;
+
+            // Simpan order
             $order = Order::create([
                 'admin_id' => 1,
                 'customer_id' => $customerId,
-                'total_price' => $cart->total_price,
+                'total_price' => $finalTotal,
+                'discount_percent' => $memberDiscountPercent,
+                'discount_amount' => $memberDiscountAmount,
+                'loyalty_discount_percent' => $loyaltyDiscountPercent,
+                'loyalty_discount_amount' => $loyaltyDiscountAmount,
                 'status' => 4, // Menunggu pembayaran
             ]);
 
-            // Insert semua detail order dan kurangi stok
+            // Simpan detail + update stok
             foreach ($cart->details as $detail) {
                 $product = $detail->product;
-
-                // Kurangi stok produk
                 $product->stock -= $detail->amount;
                 $product->save();
 
-                // Simpan ke detail order
                 DetailOrder::create([
                     'order_id' => $order->id,
                     'product_id' => $detail->product_id,
@@ -86,28 +103,28 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Hapus Cart setelah checkout
+            // Hapus keranjang
             $cart->details()->delete();
             $cart->delete();
 
-            // Midtrans
-            Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-            Config::$isProduction = false;
-            Config::$isSanitized = true;
-            Config::$is3ds = true;
+            // === MIDTRANS ===
+            \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+            \Midtrans\Config::$isProduction = false;
+            \Midtrans\Config::$isSanitized = true;
+            \Midtrans\Config::$is3ds = true;
 
             $params = [
                 'transaction_details' => [
                     'order_id' => 'ORDER-' . $order->id . '-' . time(),
-                    'gross_amount' => $order->total_price,
+                    'gross_amount' => $finalTotal,
                 ],
                 'customer_details' => [
-                    'first_name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
+                    'first_name' => $user->name,
+                    'email' => $user->email,
                 ],
             ];
 
-            $snapToken = Snap::getSnapToken($params);
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
 
             DB::commit();
 
@@ -122,6 +139,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
 
     public function cancel(Order $order)
     {
@@ -155,6 +173,9 @@ class OrderController extends Controller
         $order = Order::find($request->order_id);
         $order->status = 2;
         $order->save();
+
+        $customer = $order->customer;
+        MemberLevelService::upgradeLevel($customer);
         return redirect()->route('dashboard');
     }
 
@@ -163,6 +184,9 @@ class OrderController extends Controller
         $order = Order::find($request->order_id);
         $order->status = 2;
         $order->save();
+
+        $customer = $order->customer;
+        MemberLevelService::upgradeLevel($customer);
         return redirect('https://wa.me/082393232710'); // Redirect to WhatsApp Admin
     }
 }

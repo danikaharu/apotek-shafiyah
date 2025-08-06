@@ -17,7 +17,7 @@ class UserController extends Controller
     public function index()
     {
         if (request()->ajax()) {
-            $users = Customer::with('user')->latest()->get();
+            $users = Customer::with('user', 'memberLevel')->latest()->get();
             return DataTables::of($users)
                 ->addIndexColumn()
                 ->addColumn('image', function ($row) {
@@ -27,7 +27,12 @@ class UserController extends Controller
                 ->addColumn('name', function ($row) {
                     return $row->full_name;
                 })
-                ->addColumn('action', 'admin.user.include.action')
+                ->addColumn('member_level', function ($row) {
+                    return $row->memberLevel->name;
+                })
+                ->addColumn('action', function ($row) {
+                    return view('admin.user.include.action', compact('row'));
+                })
                 ->rawColumns(['image', 'action'])
                 ->make(true);
         }

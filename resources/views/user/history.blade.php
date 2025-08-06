@@ -22,7 +22,8 @@
                     @foreach ($orders as $order)
                         <div class="card mb-3">
                             <div class="card-header">
-                                <h5>Order #{{ $order->id }} - Tanggal: {{ $order->created_at->format('d M Y') }}</h5>
+                                <h5>Order #{{ $loop->count - $loop->index }} - Tanggal:
+                                    {{ $order->created_at->format('d M Y') }}</h5>
                             </div>
                             @foreach ($order->detail_order as $detail)
                                 <div class="container p-3 d-flex align-items-center">

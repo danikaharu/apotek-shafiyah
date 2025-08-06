@@ -61,8 +61,31 @@
                         </td>
                     </tr>
                 @endforeach
-
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-right"><strong>Subtotal</strong></td>
+                    <td colspan="2"><strong id="cart-subtotal">Rp 0</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-right"><strong>Diskon Produk</strong></td>
+                    <td colspan="2"><strong id="cart-discount-product">- Rp 0</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-right"><strong>Diskon Member</strong></td>
+                    <td colspan="2"><strong id="cart-discount-member">- Rp 0</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-right"><strong>Diskon Loyalitas</strong></td>
+                    <td colspan="2"><strong id="cart-discount-loyalty">- Rp 0</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-right"><strong>Total</strong></td>
+                    <td colspan="2"><strong id="cart-grand-total">Rp 0</strong></td>
+                </tr>
+            </tfoot>
+
+
         </table>
     </div>
 @else

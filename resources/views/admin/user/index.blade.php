@@ -82,6 +82,7 @@
                             <tr>
                                 <th>No</th>
                                 <th>Gambar</th>
+                                <th>Level Anggota</th>
                                 <th>Nama</th>
                                 <th>Alamat</th>
                                 <th>Detail</th>
@@ -129,7 +130,11 @@
                     },
                     {
                         data: 'image',
-                    }, {
+                    },
+                    {
+                        data: 'member_level',
+                    },
+                    {
                         data: 'name',
                     }, {
                         data: 'address',

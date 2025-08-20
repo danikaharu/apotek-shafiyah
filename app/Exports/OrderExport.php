@@ -22,21 +22,22 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 
     protected $startDate;
     protected $endDate;
+
     protected $totalBuyPrice = 0;
     protected $totalSellPrice = 0;
     protected $totalProfit = 0;
-    protected $dailyProfit = 0;
-    protected $loss = 0;
+    protected $totalDiscount = 0;
+    protected $totalLoyaltyDiscount = 0;
 
     public function __construct($startDate, $endDate)
     {
         $this->startDate = $startDate;
-        $this->endDate = $endDate;
+        $this->endDate   = $endDate;
     }
 
     public function collection()
     {
-        return DetailOrder::with(['product.purchases', 'product.type', 'order'])
+        return DetailOrder::with(['product.purchases', 'product.type', 'order.detail_order'])
             ->whereHas('order', function ($query) {
                 $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
             })->get();
@@ -44,30 +45,53 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 
     public function map($detailOrder): array
     {
-        $purchase = $detailOrder->product->purchases->sortByDesc('order_date')->first();
-        $buyPrice = $purchase?->pivot->price ?? 0;
-        $sellPrice = $detailOrder->product->price ?? 0;
-        $amount = $detailOrder->amount;
+        $purchase   = $detailOrder->product->purchases->sortByDesc('order_date')->first();
+        $buyPrice   = $purchase?->pivot->price ?? 0;
+        $sellPrice  = $detailOrder->product->price ?? 0;
+        $amount     = $detailOrder->amount;
+        $order      = $detailOrder->order;
 
-        // Hitung total untuk rekap
-        $this->totalBuyPrice += $buyPrice;
-        $this->totalSellPrice += $sellPrice;
-        $this->totalProfit += ($sellPrice - $buyPrice);
+        // Subtotal per item
+        $subtotalBuy  = $buyPrice * $amount;
+        $subtotalSell = $sellPrice * $amount;
 
-        if ($sellPrice >= $buyPrice) {
-            $this->dailyProfit += ($sellPrice - $buyPrice) * $amount;
-        } else {
-            $this->loss += ($buyPrice - $sellPrice) * $amount;
-        }
+        // Hitung total penjualan order (untuk distribusi diskon)
+        $orderSubtotalSell = $order->detail_order->sum(function ($d) {
+            return ($d->product->price ?? 0) * $d->amount;
+        });
+
+        // Distribusi diskon proporsional
+        $discountShare = $orderSubtotalSell > 0
+            ? ($subtotalSell / $orderSubtotalSell) * ($order->discount_amount ?? 0)
+            : 0;
+
+        $loyaltyDiscountShare = $orderSubtotalSell > 0
+            ? ($subtotalSell / $orderSubtotalSell) * ($order->loyalty_discount_amount ?? 0)
+            : 0;
+
+        // Profit bersih
+        $profit = ($subtotalSell - $subtotalBuy) - $discountShare - $loyaltyDiscountShare;
+
+        // Akumulasi ke total
+        $this->totalBuyPrice        += $subtotalBuy;
+        $this->totalSellPrice       += $subtotalSell;
+        $this->totalProfit          += $profit;
+        $this->totalDiscount        += $discountShare;
+        $this->totalLoyaltyDiscount += $loyaltyDiscountShare;
 
         return [
-            $detailOrder->order->invoice_number ?? '',
-            $detailOrder->created_at->format('Y-m-d') ?? '',
+            $order->invoice_number ?? '',
+            $detailOrder->created_at?->format('Y-m-d') ?? '',
             $detailOrder->product->name ?? '',
             $detailOrder->product->type->name ?? '',
             $amount,
             'Rp ' . number_format($buyPrice, 0, ',', '.'),
             'Rp ' . number_format($sellPrice, 0, ',', '.'),
+            'Rp ' . number_format($subtotalBuy, 0, ',', '.'),
+            'Rp ' . number_format($subtotalSell, 0, ',', '.'),
+            'Rp ' . number_format($discountShare, 0, ',', '.'),
+            'Rp ' . number_format($loyaltyDiscountShare, 0, ',', '.'),
+            'Rp ' . number_format($profit, 0, ',', '.'),
         ];
     }
 
@@ -81,21 +105,26 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
             'Qty',
             'Harga Beli',
             'Harga Jual',
+            'Subtotal Beli',
+            'Subtotal Jual',
+            'Diskon',
+            'Diskon Loyalti',
+            'Profit (Setelah Diskon)',
         ];
     }
 
     public function startCell(): string
     {
-        return 'B10';
+        return 'B11'; // heading mulai baris 11 supaya rapi di bawah kop
     }
 
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet;
+                $sheet    = $event->sheet;
                 $delegate = $sheet->getDelegate();
-                $profile = Profile::first();
+                $profile  = Profile::first();
 
                 // Logo
                 $drawing = new Drawing();
@@ -106,9 +135,9 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
                 $drawing->setCoordinates('C2');
                 $drawing->setWorksheet($delegate);
 
-                // Kop Surat
-                $sheet->mergeCells('B7:H7');
-                $sheet->mergeCells('B9:H9');
+                // Kop
+                $sheet->mergeCells('B7:M7');
+                $sheet->mergeCells('B9:M9');
                 $sheet->mergeCells('D2:G2');
                 $sheet->mergeCells('D3:G3');
                 $sheet->mergeCells('D4:G4');
@@ -116,26 +145,26 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
                 $sheet->setCellValue('B7', 'Laporan Penjualan');
                 $sheet->setCellValue('B9', 'Daftar Penjualan Obat');
                 $sheet->setCellValue('D2', config('app.name'));
-                $sheet->setCellValue('D3', $profile->address);
+                $sheet->setCellValue('D3', $profile->address ?? '-');
                 $sheet->setCellValue('D4', 'Telp.');
 
-                $sheet->getStyle('B7:H7')->applyFromArray([
-                    'font' => ['size' => 12],
+                $sheet->getStyle('B7:M7')->applyFromArray([
+                    'font' => ['size' => 12, 'bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
-                        'vertical' => Alignment::VERTICAL_CENTER,
+                        'vertical'   => Alignment::VERTICAL_CENTER,
                     ],
                 ]);
 
-                // Styling tabel utama
+                // Styling tabel
                 $highestColumn = $sheet->getHighestColumn();
-                $highestRow = $sheet->getHighestRow();
+                $highestRow    = $sheet->getHighestRow();
 
                 $styleArray = [
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['argb' => '000000'],
+                            'color'       => ['argb' => '000000'],
                         ],
                     ],
                     'alignment' => [
@@ -143,40 +172,37 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
                     ],
                 ];
 
-                $sheet->getStyle("B9:{$highestColumn}{$highestRow}")->applyFromArray($styleArray);
+                $sheet->getStyle("B11:{$highestColumn}{$highestRow}")->applyFromArray($styleArray);
 
-                // Tambahkan baris total dan keuntungan/kerugian
-                $totalRow = $highestRow + 1;
+                // Footer totals
+                $totalRow = $highestRow + 2;
+
                 $sheet->setCellValue("B{$totalRow}", 'Total Harga Beli');
-                $sheet->setCellValue("G{$totalRow}", 'Rp ' . number_format($this->totalBuyPrice, 0, ',', '.'));
+                $sheet->setCellValue("I{$totalRow}", 'Rp ' . number_format($this->totalBuyPrice, 0, ',', '.'));
 
                 $totalRow++;
                 $sheet->setCellValue("B{$totalRow}", 'Total Seluruh Penjualan');
-                $sheet->setCellValue("H{$totalRow}", 'Rp ' . number_format($this->totalSellPrice, 0, ',', '.'));
+                $sheet->setCellValue("J{$totalRow}", 'Rp ' . number_format($this->totalSellPrice, 0, ',', '.'));
 
                 $totalRow++;
-                $sheet->setCellValue("B{$totalRow}", 'Total Laba Bersih');
-                $sheet->setCellValue("G{$totalRow}", 'Rp ' . number_format($this->totalProfit, 0, ',', '.'));
+                $sheet->setCellValue("B{$totalRow}", 'Total Diskon');
+                $sheet->setCellValue("K{$totalRow}", 'Rp ' . number_format($this->totalDiscount, 0, ',', '.'));
 
                 $totalRow++;
-                $sheet->mergeCells("B{$totalRow}:F{$totalRow}");
-                $sheet->setCellValue("B{$totalRow}", 'Keuntungan Harian');
-                $sheet->mergeCells("G{$totalRow}:H{$totalRow}");
-                $sheet->setCellValue("G{$totalRow}", 'Rp ' . number_format($this->dailyProfit, 0, ',', '.'));
+                $sheet->setCellValue("B{$totalRow}", 'Total Diskon Loyalti');
+                $sheet->setCellValue("L{$totalRow}", 'Rp ' . number_format($this->totalLoyaltyDiscount, 0, ',', '.'));
 
                 $totalRow++;
-                $sheet->mergeCells("B{$totalRow}:F{$totalRow}");
-                $sheet->setCellValue("B{$totalRow}", 'Kerugian');
-                $sheet->mergeCells("G{$totalRow}:H{$totalRow}");
-                $sheet->setCellValue("G{$totalRow}", 'Rp ' . number_format($this->loss, 0, ',', '.'));
+                $sheet->setCellValue("B{$totalRow}", 'Total Laba Bersih Setelah Diskon');
+                $sheet->setCellValue("M{$totalRow}", 'Rp ' . number_format($this->totalProfit, 0, ',', '.'));
 
-                // Styling total
+                // Styling footer
                 $sheet->getStyle("B" . ($totalRow - 4) . ":{$highestColumn}{$totalRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['argb' => '000000'],
+                            'color'       => ['argb' => '000000'],
                         ],
                     ],
                 ]);

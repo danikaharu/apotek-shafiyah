@@ -33,7 +33,7 @@ class OrderController extends Controller
 
             $user = auth()->user();
             $customer = $user->customer;
-            $customerId = $user->id;
+            $customerId = $customer->id;
 
             $cart = Cart::where('customer_id', $customerId)
                 ->with('details.product')

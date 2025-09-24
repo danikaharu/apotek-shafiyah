@@ -17,7 +17,10 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::where('customer_id', auth()->user()->id)
+        $user = auth()->user();
+        $customerId = $user->customer->id;
+
+        $orders = Order::where('customer_id', $customerId)
             ->where('status', 2)
             ->with('detail_order')
             ->latest()

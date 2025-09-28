@@ -181,7 +181,7 @@ class CartController extends Controller
         $afterProductDiscount = $subtotal - $productDiscount;
 
         // Diskon Member
-        $memberDiscountPercent = $customer->member_discount ?? 0;
+        $memberDiscountPercent = $customer->memberLevel?->discount_percent ?? 0;
         $memberDiscount = ($memberDiscountPercent / 100) * $afterProductDiscount;
 
         // Diskon Loyalitas (5% setiap 5 transaksi)

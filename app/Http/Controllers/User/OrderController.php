@@ -62,21 +62,24 @@ class OrderController extends Controller
             // Subtotal dari cart (sudah termasuk diskon produk per item)
             $subtotal = $cart->details->sum('total_price');
 
-            // === DISKON MEMBER LEVEL ===
+            // === Diskon Member Level ===
             $memberDiscountPercent = $customer->memberLevel->discount_percent ?? 0;
             $memberDiscountAmount = ($memberDiscountPercent / 100) * $subtotal;
 
-            // === DISKON LOYALITAS ===
+            // === Diskon Loyalitas (Flat 15% tiap kelipatan 5 transaksi selesai) ===
             $completedOrders = Order::where('customer_id', $customer->id)
                 ->where('status', 6) // Status 6 = selesai
                 ->count();
 
-            $loyaltyDiscountPercent = floor($completedOrders / 5) * 5; // 5% tiap kelipatan 5 order
-            if ($loyaltyDiscountPercent > 15) $loyaltyDiscountPercent = 15; // optional batas maksimal
-            $loyaltyDiscountAmount = ($loyaltyDiscountPercent / 100) * $subtotal;
+            $loyaltyDiscountPercent = ($completedOrders > 0 && $completedOrders % 5 === 0) ? 15 : 0;
+            $baseAmount = $subtotal - $memberDiscountAmount;
+            $loyaltyDiscountAmount = ($loyaltyDiscountPercent / 100) * max($baseAmount, 0);
 
-            // === TOTAL ===
+            // === Total Akhir ===
             $finalTotal = $subtotal - $memberDiscountAmount - $loyaltyDiscountAmount;
+            if ($finalTotal < 0) {
+                $finalTotal = 0;
+            }
 
             // Simpan order
             $order = Order::create([

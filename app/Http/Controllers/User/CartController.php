@@ -143,18 +143,22 @@ class CartController extends Controller
         $customer = auth()->user()->customer;
 
         // Diskon member berdasarkan level
-        $memberDiscountPercent = $customer->member_discount ?? 0;
+        $memberDiscountPercent = $customer->memberLevel->discount_percent ?? 0;
         $memberDiscount = ($memberDiscountPercent / 100) * $total;
 
-        // Diskon loyalitas 5% setiap 5 transaksi selesai
-        $loyaltyDiscountPercent = floor($customer->finished_orders_count / 5) * 5;
-        if ($loyaltyDiscountPercent > 0) {
-            $loyaltyDiscount = ($loyaltyDiscountPercent / 100) * ($total - $memberDiscount);
-        } else {
-            $loyaltyDiscount = 0;
-        }
+        // === Diskon Loyalitas: Flat 15% tiap kelipatan 5 transaksi selesai ===
+        $completedOrders = $customer->finished_orders_count ?? 0;
+        $loyaltyDiscountPercent = ($completedOrders > 0 && $completedOrders % 5 === 0) ? 15 : 0;
 
+        $baseAmount = $total - $memberDiscount;
+        $loyaltyDiscount = ($loyaltyDiscountPercent / 100) * max($baseAmount, 0);
+
+        // === Total Akhir ===
         $finalTotal = $total - $memberDiscount - $loyaltyDiscount;
+
+        if ($finalTotal < 0) {
+            $finalTotal = 0;
+        }
 
         $cart->total_price = $finalTotal;
         $cart->save();
@@ -164,7 +168,9 @@ class CartController extends Controller
     public function getCartTotal()
     {
         $customer = auth()->user()->customer;
-        $cart = Cart::with(['details.product.discount'])->where('customer_id', $customer->id)->first();
+        $cart = Cart::with(['details.product.discount'])
+            ->where('customer_id', $customer->id)
+            ->first();
 
         $subtotal = 0;
         $productDiscount = 0;
@@ -180,26 +186,34 @@ class CartController extends Controller
 
         $afterProductDiscount = $subtotal - $productDiscount;
 
-        // Diskon Member
+        // === Diskon Member ===
         $memberDiscountPercent = $customer->memberLevel?->discount_percent ?? 0;
         $memberDiscount = ($memberDiscountPercent / 100) * $afterProductDiscount;
 
-        // Diskon Loyalitas (5% setiap 5 transaksi)
-        $loyaltyDiscountPercent = floor($customer->finished_orders_count / 5) * 5;
-        $loyaltyDiscount = ($loyaltyDiscountPercent / 100) * ($afterProductDiscount - $memberDiscount);
+        // === Diskon Loyalitas: Flat 15% tiap kelipatan 5 transaksi selesai ===
+        $completedOrders = $customer->finished_orders_count ?? 0;
+        $loyaltyDiscountPercent = ($completedOrders > 0 && $completedOrders % 5 === 0) ? 15 : 0;
 
+        $baseAmount = $afterProductDiscount - $memberDiscount;
+        $loyaltyDiscount = ($loyaltyDiscountPercent / 100) * max($baseAmount, 0);
+
+        // === Total Akhir ===
         $grandTotal = $afterProductDiscount - $memberDiscount - $loyaltyDiscount;
+        if ($grandTotal < 0) {
+            $grandTotal = 0;
+        }
 
         return response()->json([
-            'subtotal' => number_format($subtotal, 0, ',', '.'),
+            'subtotal'        => number_format($subtotal, 0, ',', '.'),
             'product_discount' => number_format($productDiscount, 0, ',', '.'),
             'member_discount' => number_format($memberDiscount, 0, ',', '.'),
             'loyalty_discount' => number_format($loyaltyDiscount, 0, ',', '.'),
-            'total' => number_format($grandTotal, 0, ',', '.'),
-            'total_price' => $grandTotal,
-            'total_items' => $cart?->details->sum('amount') ?? 0
+            'total'           => number_format($grandTotal, 0, ',', '.'),
+            'total_price'     => $grandTotal,
+            'total_items'     => $cart?->details->sum('amount') ?? 0,
         ]);
     }
+
 
     public function getCart()
     {
